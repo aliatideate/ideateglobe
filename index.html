@@ -24,14 +24,34 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; background:var(--bg);
+    margin:0; min-height:100%; background:var(--dusk);
     display:flex; align-items:center; justify-content:center;
     font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     -webkit-font-smoothing:none;
-    padding:14px;
+    padding:0;
+  }
+  .canvas{
+    position:relative;
+    aspect-ratio:9/16;
+    width:min(100vw, 56.25vh);
+    max-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--mist) 0%, var(--dusk) 100%);
+  }
+  .canvas::before{
+    content:"";
+    position:absolute; inset:0;
+    pointer-events:none;
+    background-image:radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px);
+    background-size:5px 5px;
+    mix-blend-mode:overlay;
+    image-rendering:pixelated;
   }
   .window{
-    width:660px; max-width:96vw;
+    position:relative; z-index:1;
+    width:660px; max-width:88%;
+    flex-shrink:0;
     background:var(--bg);
     border:5px solid var(--win-border);
     box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
@@ -158,6 +178,7 @@
   }
 </style>
 
+<div class="canvas">
 <div class="window" role="application" aria-label="Global Design Partners globe explorer">
   <div class="titlebar">
     <div class="title">Global&nbsp;Design&nbsp;Partners</div>
@@ -194,6 +215,7 @@
       <svg viewBox="0 0 18 18"><polygon class="gly" points="6,2 6,16 14,9"/></svg>
     </button>
   </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
