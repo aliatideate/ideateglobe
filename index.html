@@ -105,13 +105,13 @@
   }
   .partner-popup.show{opacity:1; pointer-events:auto}
   .partner-titlebar{
-    position:relative; height:22px;
+    position:relative; height:30px;
     background:var(--partner-accent,#2c7fd0);
     border-bottom:3px solid var(--win-border);
   }
   .partner-close{
-    position:absolute; right:4px; top:3px;
-    width:14px; height:14px; padding:0;
+    position:absolute; right:5px; top:6px;
+    width:15px; height:15px; padding:0;
     background:#c42b2b; border:2px solid var(--win-border);
     color:#fff; font-size:9px; line-height:1;
     cursor:pointer; display:grid; place-items:center;
@@ -211,7 +211,7 @@
       name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
       partner:{
         firm:'sweetwater.',
-        logo:'assets/partners/sweetwater.png',
+        logoFile:'sweetwater.png',
         logoAlt:'Sweetwater logo',
         tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
@@ -221,7 +221,6 @@
       name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
       partner:{
         firm:'Bopinc',
-        logo:'assets/partners/bopinc.png',
         logoAlt:'Bopinc logo',
         tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
@@ -231,7 +230,6 @@
       name:'Dakar', country:'Senegal', lon:-17.45, lat:14.69,
       partner:{
         firm:'Yux Design',
-        logo:'assets/partners/yux-design.png',
         logoAlt:'Yux Design logo',
         tags:['User Research','Remote Workshops','UX Design'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
@@ -241,7 +239,6 @@
       name:'New York City', country:'United States', lon:-74.00, lat:40.71,
       partner:{
         firm:'IDEO',
-        logo:'assets/partners/ideo.png',
         logoAlt:'IDEO logo',
         tags:['Illustration','UX Design','User Research','Presentation Design'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
@@ -375,6 +372,11 @@
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
   }
 
+  function partnerLogoSrc(partner){
+    const file=partner.logoFile || (partner.firm + '.png');
+    return encodeURI('assets/partners/' + file);
+  }
+
   function renderPartner(idx){
     if(idx===renderedPartnerIdx) return;
     renderedPartnerIdx=idx;
@@ -387,10 +389,10 @@
       li.textContent=tag;
       partnerTags.appendChild(li);
     });
-    if(partner.logo){
+    if(partner.firm){
       partnerLogo.innerHTML='';
       const img=document.createElement('img');
-      img.src=partner.logo;
+      img.src=partnerLogoSrc(partner);
       img.alt=partner.logoAlt || partner.firm;
       img.onerror=()=> showFirmFallback(partner);
       partnerLogo.appendChild(img);
