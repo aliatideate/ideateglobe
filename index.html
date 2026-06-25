@@ -293,8 +293,8 @@
 
   const buf = document.createElement('canvas'); buf.width=R; buf.height=R;
   const bctx = buf.getContext('2d');
-  const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90);
-  const path = d3.geoPath(proj, bctx).precision(1.2);
+  const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90).precision(1.2);
+  const path = d3.geoPath(proj, bctx);
   const graticule = d3.geoGraticule().step([20,20])();
   const LAND_PALETTE=[
     hexToRgb(COL.ocean), hexToRgb(COL.oceanLt), hexToRgb(COL.land),
