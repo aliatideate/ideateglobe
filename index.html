@@ -24,14 +24,34 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; background:var(--bg);
+    margin:0; min-height:100%; background:var(--dusk);
     display:flex; align-items:center; justify-content:center;
     font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     -webkit-font-smoothing:none;
-    padding:14px;
+    padding:0;
+  }
+  .canvas{
+    position:relative;
+    aspect-ratio:9/16;
+    width:min(100vw, 56.25vh);
+    max-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--mist) 0%, var(--dusk) 100%);
+  }
+  .canvas::before{
+    content:"";
+    position:absolute; inset:0;
+    pointer-events:none;
+    background-image:radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px);
+    background-size:5px 5px;
+    mix-blend-mode:overlay;
+    image-rendering:pixelated;
   }
   .window{
-    width:660px; max-width:96vw;
+    position:relative; z-index:1;
+    width:660px; max-width:96%;
+    flex-shrink:0;
     background:var(--bg);
     border:5px solid var(--win-border);
     box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
@@ -47,8 +67,6 @@
     font-weight:700; letter-spacing:.5px;
   }
   .title{font-size:17px; white-space:nowrap}
-  .menu{display:flex; gap:20px; font-weight:700; font-size:14px}
-  .menu span{cursor:default}
   .winbtns{margin-left:auto; display:flex; gap:7px}
   .winbtn{
     width:22px;height:22px; border:2px solid var(--bar-text);
@@ -158,10 +176,10 @@
   }
 </style>
 
+<div class="canvas">
 <div class="window" role="application" aria-label="Global Design Partners globe explorer">
   <div class="titlebar">
     <div class="title">Global&nbsp;Design&nbsp;Partners</div>
-    <div class="menu"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
     <div class="winbtns">
       <div class="winbtn" title="Minimize"><b>_</b></div>
       <div class="winbtn" title="Maximize"><b>□</b></div>
@@ -194,6 +212,7 @@
       <svg viewBox="0 0 18 18"><polygon class="gly" points="6,2 6,16 14,9"/></svg>
     </button>
   </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -293,34 +312,9 @@
 
   const buf = document.createElement('canvas'); buf.width=R; buf.height=R;
   const bctx = buf.getContext('2d');
-  const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90).precision(1.2);
+  const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90);
   const path = d3.geoPath(proj, bctx);
   const graticule = d3.geoGraticule().step([20,20])();
-  const LAND_PALETTE=[
-    hexToRgb(COL.ocean), hexToRgb(COL.oceanLt), hexToRgb(COL.land),
-    hexToRgb(COL.border), hexToRgb('#A8A1E5'), [8,18,38],
-  ];
-
-  function hexToRgb(hex){
-    const n=parseInt(hex.slice(1),16);
-    return [(n>>16)&255,(n>>8)&255,n&255];
-  }
-
-  function quantizeLand(){
-    const img=bctx.getImageData(0,0,R,R);
-    const d=img.data;
-    for(let i=0;i<d.length;i+=4){
-      if(d[i+3]<16) continue;
-      let best=0, bestD=Infinity;
-      for(let p=0;p<LAND_PALETTE.length;p++){
-        const dr=d[i]-LAND_PALETTE[p][0], dg=d[i+1]-LAND_PALETTE[p][1], db=d[i+2]-LAND_PALETTE[p][2];
-        const dist=dr*dr+dg*dg+db*db;
-        if(dist<bestD){ bestD=dist; best=p; }
-      }
-      d[i]=LAND_PALETTE[best][0]; d[i+1]=LAND_PALETTE[best][1]; d[i+2]=LAND_PALETTE[best][2]; d[i+3]=255;
-    }
-    bctx.putImageData(img,0,0);
-  }
 
   const pat = document.createElement('canvas'); pat.width=2; pat.height=2;
   const pctx = pat.getContext('2d');
@@ -342,17 +336,13 @@
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=COL.ocean; bctx.fill();
     bctx.save(); bctx.beginPath(); path({type:'Sphere'}); bctx.clip();
     bctx.fillStyle=oceanPattern; bctx.fillRect(0,0,R,R); bctx.restore();
-    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=1;
-    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
+    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=1; bctx.stroke();
     bctx.beginPath(); path(land); bctx.fillStyle=COL.land; bctx.fill();
-    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=2;
-    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
-    bctx.beginPath(); path(land); bctx.strokeStyle=COL.border; bctx.lineWidth=2;
-    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
-    quantizeLand();
+    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=1; bctx.stroke();
+    bctx.beginPath(); path(land);    bctx.strokeStyle=COL.landEdge; bctx.lineWidth=1; bctx.stroke();
     const g = bctx.createRadialGradient(R/2,R/2,R*0.30, R/2,R/2,R/2-3);
-    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.94,'rgba(0,0,0,0)');
-    g.addColorStop(1,'rgba(8,18,38,0.35)');
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.92,'rgba(0,0,0,0)');
+    g.addColorStop(1,'rgba(8,18,38,0.42)');
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=g; bctx.fill();
   }
 
