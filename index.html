@@ -194,18 +194,6 @@
 (async function(){
   "use strict";
 
-  const topo = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r => r.json());
-  const land    = topojson.feature(topo, topo.objects.countries);
-  const borders = topojson.mesh(topo, topo.objects.countries, (a,b)=>a!==b);
-
-  const COL = {
-    ocean:'#2c7fd0', oceanLt:'#4f9ce0', oceanEdge:'#1f63aa',
-    land:'#f3b50b',  landEdge:'#c8920a', border:'#2e2208',
-    grat:'rgba(168,210,245,0.55)',
-    markFill:'#f6c40a', markEdge:'#211806',
-    shadow:'#b6ab8c'
-  };
-
   const CITIES = [
     {
       name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
@@ -249,6 +237,42 @@
   const DUBAI_IDX = 0;
   const REVEAL_DELAY_MS = 2000;
   const POPUP_INSET = 20;
+
+  function partnerLogoSrc(partner){
+    const file=partner.logoFile || (partner.firm + '.png');
+    return encodeURI('assets/partners/' + file);
+  }
+
+  const logoCache=CITIES.map(()=>({ok:false, img:null}));
+
+  function preloadPartnerLogos(){
+    return Promise.all(CITIES.map((city,i)=>new Promise(resolve=>{
+      const partner=city.partner;
+      const img=new Image();
+      img.alt=partner.logoAlt || partner.firm;
+      img.onload=()=>{ logoCache[i]={ok:true, img}; resolve(); };
+      img.onerror=()=>{ logoCache[i]={ok:false, img:null}; resolve(); };
+      img.src=partnerLogoSrc(partner);
+    })));
+  }
+
+  const topo = await (async()=>{
+    const [data]=await Promise.all([
+      fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r=>r.json()),
+      preloadPartnerLogos(),
+    ]);
+    return data;
+  })();
+  const land    = topojson.feature(topo, topo.objects.countries);
+  const borders = topojson.mesh(topo, topo.objects.countries, (a,b)=>a!==b);
+
+  const COL = {
+    ocean:'#2c7fd0', oceanLt:'#4f9ce0', oceanEdge:'#1f63aa',
+    land:'#f3b50b',  landEdge:'#c8920a', border:'#2e2208',
+    grat:'rgba(168,210,245,0.55)',
+    markFill:'#f6c40a', markEdge:'#211806',
+    shadow:'#b6ab8c'
+  };
 
   const main = document.getElementById('globe');
   const mctx = main.getContext('2d');
@@ -372,11 +396,6 @@
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
   }
 
-  function partnerLogoSrc(partner){
-    const file=partner.logoFile || (partner.firm + '.png');
-    return encodeURI('assets/partners/' + file);
-  }
-
   function renderPartner(idx){
     if(idx===renderedPartnerIdx) return;
     renderedPartnerIdx=idx;
@@ -389,13 +408,10 @@
       li.textContent=tag;
       partnerTags.appendChild(li);
     });
-    if(partner.firm){
+    const cached=logoCache[idx];
+    if(cached.ok && cached.img){
       partnerLogo.innerHTML='';
-      const img=document.createElement('img');
-      img.src=partnerLogoSrc(partner);
-      img.alt=partner.logoAlt || partner.firm;
-      img.onerror=()=> showFirmFallback(partner);
-      partnerLogo.appendChild(img);
+      partnerLogo.appendChild(cached.img.cloneNode());
     } else {
       showFirmFallback(partner);
     }
