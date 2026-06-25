@@ -294,8 +294,33 @@
   const buf = document.createElement('canvas'); buf.width=R; buf.height=R;
   const bctx = buf.getContext('2d');
   const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90);
-  const path = d3.geoPath(proj, bctx);
+  const path = d3.geoPath(proj, bctx).precision(1.2);
   const graticule = d3.geoGraticule().step([20,20])();
+  const LAND_PALETTE=[
+    hexToRgb(COL.ocean), hexToRgb(COL.oceanLt), hexToRgb(COL.land),
+    hexToRgb(COL.border), hexToRgb('#A8A1E5'), [8,18,38],
+  ];
+
+  function hexToRgb(hex){
+    const n=parseInt(hex.slice(1),16);
+    return [(n>>16)&255,(n>>8)&255,n&255];
+  }
+
+  function quantizeLand(){
+    const img=bctx.getImageData(0,0,R,R);
+    const d=img.data;
+    for(let i=0;i<d.length;i+=4){
+      if(d[i+3]<16) continue;
+      let best=0, bestD=Infinity;
+      for(let p=0;p<LAND_PALETTE.length;p++){
+        const dr=d[i]-LAND_PALETTE[p][0], dg=d[i+1]-LAND_PALETTE[p][1], db=d[i+2]-LAND_PALETTE[p][2];
+        const dist=dr*dr+dg*dg+db*db;
+        if(dist<bestD){ bestD=dist; best=p; }
+      }
+      d[i]=LAND_PALETTE[best][0]; d[i+1]=LAND_PALETTE[best][1]; d[i+2]=LAND_PALETTE[best][2]; d[i+3]=255;
+    }
+    bctx.putImageData(img,0,0);
+  }
 
   const pat = document.createElement('canvas'); pat.width=2; pat.height=2;
   const pctx = pat.getContext('2d');
@@ -317,13 +342,17 @@
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=COL.ocean; bctx.fill();
     bctx.save(); bctx.beginPath(); path({type:'Sphere'}); bctx.clip();
     bctx.fillStyle=oceanPattern; bctx.fillRect(0,0,R,R); bctx.restore();
-    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=1; bctx.stroke();
+    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=1;
+    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
     bctx.beginPath(); path(land); bctx.fillStyle=COL.land; bctx.fill();
-    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=1; bctx.stroke();
-    bctx.beginPath(); path(land);    bctx.strokeStyle=COL.landEdge; bctx.lineWidth=1; bctx.stroke();
+    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=2;
+    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
+    bctx.beginPath(); path(land); bctx.strokeStyle=COL.border; bctx.lineWidth=2;
+    bctx.lineJoin='miter'; bctx.lineCap='butt'; bctx.stroke();
+    quantizeLand();
     const g = bctx.createRadialGradient(R/2,R/2,R*0.30, R/2,R/2,R/2-3);
-    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.92,'rgba(0,0,0,0)');
-    g.addColorStop(1,'rgba(8,18,38,0.42)');
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.94,'rgba(0,0,0,0)');
+    g.addColorStop(1,'rgba(8,18,38,0.35)');
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=g; bctx.fill();
   }
 
