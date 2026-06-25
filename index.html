@@ -1,0 +1,339 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World View</title>
+<style>
+  :root{
+    --bg:#e8dfc7;
+    --win-border:#12233d;
+    --bar:#bf4b2b;
+    --bar-text:#ffffff;
+    --ink:#1a1206;
+    --btn-face:#e8dfc7;
+    --ocean:#2c7fd0;
+    --shadow-dot:#b6ab8c;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    -webkit-font-smoothing:none;
+    padding:14px;
+  }
+  .window{
+    width:660px; max-width:96vw;
+    background:var(--bg);
+    border:5px solid var(--win-border);
+    box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
+    image-rendering:pixelated;
+    display:flex; flex-direction:column;
+    user-select:none;
+  }
+  .titlebar{
+    background:var(--bar); color:var(--bar-text);
+    border-bottom:5px solid var(--win-border);
+    display:flex; align-items:center; gap:22px;
+    padding:7px 8px 7px 12px;
+    font-weight:700; letter-spacing:.5px;
+  }
+  .title{font-size:17px; white-space:nowrap}
+  .menu{display:flex; gap:20px; font-weight:700; font-size:14px}
+  .menu span{cursor:default}
+  .winbtns{margin-left:auto; display:flex; gap:7px}
+  .winbtn{
+    width:22px;height:22px; border:2px solid var(--bar-text);
+    display:grid; place-items:center; font-size:12px; line-height:1;
+    color:var(--bar-text); cursor:default; background:transparent;
+  }
+  .winbtn b{transform:translateY(-1px)}
+  .stage{position:relative; padding:0; background:var(--bg)}
+  canvas#globe{display:block; width:100%; height:auto; image-rendering:pixelated; background:var(--bg)}
+  .tip{
+    position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
+    transform-origin:50% 120%;
+    background:#fffef6; color:var(--ink);
+    border:2px solid var(--win-border);
+    box-shadow:3px 3px 0 rgba(0,0,0,.25);
+    padding:5px 9px; font-size:13px; font-weight:700; white-space:nowrap;
+    opacity:0; pointer-events:none;
+    transition:opacity .14s steps(3), transform .14s steps(3);
+  }
+  .tip.show{opacity:1; transform:translate(-50%,-100%) scale(1)}
+  .tip .sub{display:block; font-weight:400; font-size:11px; color:#6a5a2c; margin-top:1px}
+  .tip:after{
+    content:""; position:absolute; left:50%; bottom:-7px; width:6px; height:6px;
+    margin-left:-3px; background:#fffef6;
+    border-right:2px solid var(--win-border); border-bottom:2px solid var(--win-border);
+    transform:rotate(45deg);
+  }
+  .scrollbar{
+    display:flex; align-items:stretch; height:40px;
+    border-top:5px solid var(--win-border);
+    background:var(--bg);
+  }
+  .arrow{
+    width:46px; flex:0 0 46px; background:var(--btn-face);
+    border:none; cursor:pointer; display:grid; place-items:center;
+    position:relative;
+  }
+  .arrow.left{border-right:3px solid var(--win-border)}
+  .arrow.right{border-left:3px solid var(--win-border)}
+  .arrow:active{background:#d8cfb4}
+  .arrow:disabled{cursor:default; opacity:.45}
+  .arrow svg{width:18px;height:18px}
+  .arrow .gly{fill:var(--ink)}
+  .track{position:relative; flex:1 1 auto; background:#f1ead4;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+  .thumb{
+    position:absolute; top:6px; bottom:6px; width:120px;
+    background:var(--bar); border:2px solid var(--win-border);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.25);
+    cursor:grab; touch-action:none;
+  }
+  .thumb:active{cursor:grabbing}
+  @media (prefers-reduced-motion:reduce){
+    .tip{transition:none}
+  }
+</style>
+
+<div class="window" role="application" aria-label="World View globe explorer">
+  <div class="titlebar">
+    <div class="title">World&nbsp;View</div>
+    <div class="menu"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
+    <div class="winbtns">
+      <div class="winbtn" title="Minimize"><b>_</b></div>
+      <div class="winbtn" title="Maximize"><b>□</b></div>
+      <div class="winbtn" title="Close"><b>✕</b></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <canvas id="globe" width="660" height="600"></canvas>
+    <div class="tip" id="tip"><span id="tipCity">Dubai</span><span class="sub" id="tipCountry">United Arab Emirates</span></div>
+  </div>
+
+  <div class="scrollbar">
+    <button class="arrow left" id="prev" aria-label="Previous location">
+      <svg viewBox="0 0 18 18"><polygon class="gly" points="12,2 12,16 4,9"/></svg>
+    </button>
+    <div class="track" id="track">
+      <div class="thumb" id="thumb"></div>
+    </div>
+    <button class="arrow right" id="next" aria-label="Next location">
+      <svg viewBox="0 0 18 18"><polygon class="gly" points="6,2 6,16 14,9"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+(async function(){
+  "use strict";
+
+  const topo = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r => r.json());
+  const land    = topojson.feature(topo, topo.objects.countries);
+  const borders = topojson.mesh(topo, topo.objects.countries, (a,b)=>a!==b);
+
+  const COL = {
+    ocean:'#2c7fd0', oceanLt:'#4f9ce0', oceanEdge:'#1f63aa',
+    land:'#f3b50b',  landEdge:'#c8920a', border:'#2e2208',
+    grat:'rgba(168,210,245,0.55)',
+    markFill:'#f6c40a', markEdge:'#211806',
+    shadow:'#b6ab8c'
+  };
+
+  const CITIES = [
+    {name:'Dubai',          country:'United Arab Emirates', lon:55.27, lat:25.20},
+    {name:'Amsterdam',      country:'Netherlands',          lon: 4.90, lat:52.37},
+    {name:'Dakar',          country:'Senegal',              lon:-17.45,lat:14.69},
+    {name:'New York City',  country:'United States',        lon:-74.00,lat:40.71},
+  ];
+  const N = CITIES.length;
+
+  const main = document.getElementById('globe');
+  const mctx = main.getContext('2d');
+  const W = main.width, H = main.height;
+  const R = 150;
+  const GLOBE = 560;
+  const GX = (W-GLOBE)/2, GY = 8;
+  const CX = GX+GLOBE/2, CY = GY+GLOBE/2;
+
+  const buf = document.createElement('canvas'); buf.width=R; buf.height=R;
+  const bctx = buf.getContext('2d');
+  const proj = d3.geoOrthographic().translate([R/2,R/2]).scale(R/2-3).clipAngle(90);
+  const path = d3.geoPath(proj, bctx);
+  const graticule = d3.geoGraticule().step([20,20])();
+
+  const pat = document.createElement('canvas'); pat.width=2; pat.height=2;
+  const pctx = pat.getContext('2d');
+  pctx.fillStyle=COL.oceanLt; pctx.fillRect(0,0,1,1); pctx.fillRect(1,1,1,1);
+  const oceanPattern = bctx.createPattern(pat,'repeat');
+
+  function rotForPos(p){
+    const i = Math.max(0, Math.min(N-2, Math.floor(p)));
+    const f = Math.max(0, Math.min(1, p - i));
+    const a = CITIES[i], b = CITIES[i+1];
+    return [ -(a.lon+(b.lon-a.lon)*f), -(a.lat+(b.lat-a.lat)*f), 0 ];
+  }
+
+  function drawBuffer(rot, settled){
+    bctx.clearRect(0,0,R,R);
+    bctx.imageSmoothingEnabled=false;
+    proj.rotate(rot);
+
+    bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=COL.ocean; bctx.fill();
+    bctx.save(); bctx.beginPath(); path({type:'Sphere'}); bctx.clip();
+    bctx.fillStyle=oceanPattern; bctx.fillRect(0,0,R,R); bctx.restore();
+    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=0.6; bctx.stroke();
+    bctx.beginPath(); path(land); bctx.fillStyle=COL.land; bctx.fill();
+    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=0.6; bctx.stroke();
+    bctx.beginPath(); path(land);    bctx.strokeStyle=COL.landEdge; bctx.lineWidth=0.5; bctx.stroke();
+    const g = bctx.createRadialGradient(R/2,R/2,R*0.30, R/2,R/2,R/2-3);
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.80,'rgba(0,0,0,0)');
+    g.addColorStop(1,'rgba(8,18,38,0.42)');
+    bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=g; bctx.fill();
+
+    if(settled){
+      const tri=11, cx=R/2, cy=R/2;
+      const bx=cx-0.667*tri, by=cy-0.333*tri;
+      const tp=()=>{bctx.beginPath();bctx.moveTo(bx,by);bctx.lineTo(bx+tri,by);bctx.lineTo(bx+tri,by+tri);bctx.closePath();};
+      tp(); bctx.fillStyle=COL.markFill; bctx.fill();
+      bctx.lineWidth=1.5; bctx.lineJoin='miter'; bctx.strokeStyle=COL.markEdge; tp(); bctx.stroke();
+    }
+  }
+
+  function drawShadow(){
+    const sy=GY+GLOBE+14, rx=GLOBE*0.34, ry=15, step=4;
+    for(let yy=-ry; yy<=ry; yy+=step){
+      for(let xx=-rx; xx<=rx; xx+=step){
+        const d=(xx*xx)/(rx*rx)+(yy*yy)/(ry*ry);
+        if(d>1) continue;
+        const keep = (1-d);
+        if(((xx/step + yy/step) & 1) === 0 && Math.random() < keep*1.1){
+          mctx.fillStyle = COL.shadow;
+          mctx.globalAlpha = 0.55*keep+0.1;
+          mctx.fillRect(CX+xx, sy+yy, 2, 2);
+        }
+      }
+    }
+    mctx.globalAlpha=1;
+  }
+
+  function render(pos, settled){
+    drawBuffer(rotForPos(pos), settled);
+    mctx.clearRect(0,0,W,H);
+    drawShadow();
+    mctx.imageSmoothingEnabled=false;
+    mctx.drawImage(buf, 0,0,R,R, GX,GY,GLOBE,GLOBE);
+  }
+
+  const tip=document.getElementById('tip');
+  const tipCity=document.getElementById('tipCity');
+  const tipCountry=document.getElementById('tipCountry');
+  const stageEl=document.querySelector('.stage');
+  function placeTip(show, idx){
+    if(show){
+      const c=CITIES[idx]; tipCity.textContent=c.name; tipCountry.textContent=c.country;
+      const sx = stageEl.clientWidth/ W;
+      tip.style.left = (CX*sx) + 'px';
+      tip.style.top  = ((CY - 24)*sx) + 'px';
+      tip.classList.add('show');
+    } else {
+      tip.classList.remove('show');
+    }
+  }
+
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let pos=0, target=0, dragging=false, animating=false, fromPos=0, t0=0, dur=0;
+  const ease = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+
+  function settledNow(){ return !dragging && !animating && Math.abs(pos-Math.round(pos))<1e-6; }
+
+  function frame(){
+    const s=settledNow();
+    render(pos, s);
+    placeTip(s, Math.round(pos));
+    placeThumb(pos);
+    updateArrows();
+  }
+
+  function animateTo(idx){
+    idx=Math.max(0,Math.min(N-1,idx));
+    if(reduce){ pos=target=idx; animating=false; frame(); return; }
+    fromPos=pos; target=idx; t0=performance.now();
+    dur=Math.max(240, Math.abs(target-fromPos)*620);
+    animating=true; requestAnimationFrame(tick);
+  }
+  function tick(now){
+    if(dragging){ animating=false; return; }
+    let t=(now-t0)/dur; if(t>=1)t=1;
+    pos=fromPos+(target-fromPos)*ease(t);
+    render(pos,false); placeThumb(pos); placeTip(false);
+    if(t<1){ requestAnimationFrame(tick); }
+    else { animating=false; pos=target; frame(); }
+  }
+
+  const track=document.getElementById('track');
+  const thumb=document.getElementById('thumb');
+  const prev=document.getElementById('prev');
+  const next=document.getElementById('next');
+
+  function trackGeom(){
+    const tr=track.getBoundingClientRect();
+    const tw=thumb.offsetWidth;
+    return {left:tr.left, width:tr.width, tw};
+  }
+  function placeThumb(p){
+    const {width,tw}=trackGeom();
+    const x=(p/(N-1))*(width-tw);
+    thumb.style.left=x+'px';
+  }
+  function updateArrows(){
+    const i=Math.round(pos);
+    prev.disabled = (!animating && i<=0 && pos<=0.0001);
+    next.disabled = (!animating && i>=N-1 && pos>=N-1-0.0001);
+  }
+
+  prev.addEventListener('click',()=>{ if(prev.disabled)return; animateTo(Math.round(animating?target:pos)-1); });
+  next.addEventListener('click',()=>{ if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
+
+  thumb.addEventListener('pointerdown',e=>{
+    dragging=true; animating=false; thumb.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  thumb.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    const {left,width,tw}=trackGeom();
+    let x=e.clientX-left-tw/2;
+    let p=(x/(width-tw))*(N-1);
+    pos=Math.max(0,Math.min(N-1,p));
+    render(pos,false); placeThumb(pos); placeTip(false); updateArrows();
+  });
+  function endDrag(e){
+    if(!dragging)return; dragging=false;
+    try{thumb.releasePointerCapture(e.pointerId);}catch(_){}
+    animateTo(Math.round(pos));
+  }
+  thumb.addEventListener('pointerup',endDrag);
+  thumb.addEventListener('pointercancel',endDrag);
+
+  track.addEventListener('pointerdown',e=>{
+    if(e.target===thumb)return;
+    const {left,width,tw}=trackGeom();
+    let p=((e.clientX-left-tw/2)/(width-tw))*(N-1);
+    animateTo(Math.round(Math.max(0,Math.min(N-1,p))));
+  });
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'){ if(!next.disabled)next.click(); }
+    if(e.key==='ArrowLeft'){ if(!prev.disabled)prev.click(); }
+  });
+
+  window.addEventListener('resize',()=>{ placeThumb(pos); if(settledNow())placeTip(true,Math.round(pos)); });
+
+  frame();
+})();
+</script>
