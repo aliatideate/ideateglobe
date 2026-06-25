@@ -93,8 +93,60 @@
     cursor:grab; touch-action:none;
   }
   .thumb:active{cursor:grabbing}
+  .partner-popup{
+    position:absolute; left:0; top:0; width:200px;
+    background:var(--partner-bg,#f3b50b);
+    border:3px solid var(--win-border);
+    box-shadow:4px 4px 0 rgba(0,0,0,.28);
+    opacity:0; pointer-events:none;
+    transform-origin:0 0;
+    transition:opacity .14s steps(3);
+    z-index:2;
+  }
+  .partner-popup.show{opacity:1; pointer-events:auto}
+  .partner-titlebar{
+    position:relative; height:22px;
+    background:var(--partner-accent,#2c7fd0);
+    border-bottom:3px solid var(--win-border);
+  }
+  .partner-close{
+    position:absolute; right:4px; top:3px;
+    width:14px; height:14px; padding:0;
+    background:#c42b2b; border:2px solid var(--win-border);
+    color:#fff; font-size:9px; line-height:1;
+    cursor:pointer; display:grid; place-items:center;
+    font-family:inherit; font-weight:700;
+  }
+  .partner-close:active{background:#a82424}
+  .partner-body{padding:10px 12px 12px}
+  .partner-logo{
+    display:flex; align-items:center; justify-content:center;
+    min-height:72px; margin-bottom:10px;
+  }
+  .partner-logo img{
+    display:block; max-width:100%; max-height:80px;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+  }
+  .partner-logo .firm-fallback{
+    color:var(--partner-accent,#2c7fd0);
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:22px; font-weight:400; text-align:center;
+    line-height:1.15;
+  }
+  .partner-tags{
+    list-style:none; margin:0; padding:0;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .partner-tags li{
+    background:var(--partner-bg,#f3b50b);
+    border:2px solid var(--partner-accent,#2c7fd0);
+    box-shadow:3px 3px 0 var(--partner-accent,#2c7fd0);
+    color:var(--partner-accent,#2c7fd0);
+    font-size:11px; font-weight:700; text-align:center;
+    padding:5px 6px; line-height:1.2;
+  }
   @media (prefers-reduced-motion:reduce){
-    .tip{transition:none}
+    .tip,.partner-popup{transition:none}
   }
 </style>
 
@@ -112,6 +164,15 @@
   <div class="stage">
     <canvas id="globe" width="660" height="600"></canvas>
     <div class="tip" id="tip"><span id="tipCity">Dubai</span><span class="sub" id="tipCountry">United Arab Emirates</span></div>
+    <div class="partner-popup" id="partnerPopup" hidden>
+      <div class="partner-titlebar">
+        <button type="button" class="partner-close" id="partnerClose" aria-label="Close">✕</button>
+      </div>
+      <div class="partner-body">
+        <div class="partner-logo" id="partnerLogo"></div>
+        <ul class="partner-tags" id="partnerTags"></ul>
+      </div>
+    </div>
   </div>
 
   <div class="scrollbar">
@@ -146,10 +207,40 @@
   };
 
   const CITIES = [
-    {name:'Dubai',          country:'United Arab Emirates', lon:55.27, lat:25.20},
-    {name:'Amsterdam',      country:'Netherlands',          lon: 4.90, lat:52.37},
-    {name:'Dakar',          country:'Senegal',              lon:-17.45,lat:14.69},
-    {name:'New York City',  country:'United States',        lon:-74.00,lat:40.71},
+    {
+      name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
+      partner:{
+        firm:'sweetwater.',
+        logo:'assets/partners/sweetwater.png',
+        logoAlt:'Sweetwater logo',
+        tags:['Market research','GTM Strategy','Research workshops','Prototyping & User Testing'],
+        bg:'#f3b50b', accent:'#2c7fd0'
+      }
+    },
+    {
+      name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
+      partner:{
+        firm:'Partner name TBD',
+        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        bg:'#f3b50b', accent:'#2c7fd0'
+      }
+    },
+    {
+      name:'Dakar', country:'Senegal', lon:-17.45, lat:14.69,
+      partner:{
+        firm:'Partner name TBD',
+        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        bg:'#f3b50b', accent:'#2c7fd0'
+      }
+    },
+    {
+      name:'New York City', country:'United States', lon:-74.00, lat:40.71,
+      partner:{
+        firm:'Partner name TBD',
+        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        bg:'#f3b50b', accent:'#2c7fd0'
+      }
+    },
   ];
   const N = CITIES.length;
 
@@ -263,6 +354,77 @@
     }
   }
 
+  const partnerPopup=document.getElementById('partnerPopup');
+  const partnerLogo=document.getElementById('partnerLogo');
+  const partnerTags=document.getElementById('partnerTags');
+  const partnerClose=document.getElementById('partnerClose');
+  let partnerDismissed=false, lastPartnerIdx=0, renderedPartnerIdx=-1;
+
+  function showFirmFallback(partner){
+    partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
+  }
+
+  function renderPartner(idx){
+    if(idx===renderedPartnerIdx) return;
+    renderedPartnerIdx=idx;
+    const partner=CITIES[idx].partner;
+    partnerPopup.style.setProperty('--partner-bg', partner.bg);
+    partnerPopup.style.setProperty('--partner-accent', partner.accent);
+    partnerTags.innerHTML='';
+    partner.tags.forEach(tag=>{
+      const li=document.createElement('li');
+      li.textContent=tag;
+      partnerTags.appendChild(li);
+    });
+    if(partner.logo){
+      partnerLogo.innerHTML='';
+      const img=document.createElement('img');
+      img.src=partner.logo;
+      img.alt=partner.logoAlt || partner.firm;
+      img.onerror=()=> showFirmFallback(partner);
+      partnerLogo.appendChild(img);
+    } else {
+      showFirmFallback(partner);
+    }
+  }
+
+  function placePartner(show, idx){
+    const sx=stageEl.clientWidth/W;
+    const partner=CITIES[idx].partner;
+    const leftPct=partner.popupLeft ?? 0.06;
+    const topPct=partner.popupTop ?? 0.52;
+    partnerPopup.style.left=(W*leftPct*sx)+'px';
+    partnerPopup.style.top=(H*topPct*sx)+'px';
+    partnerPopup.style.transform='scale('+sx+')';
+    if(show){
+      partnerPopup.hidden=false;
+      renderPartner(idx);
+      partnerPopup.classList.add('show');
+    } else {
+      partnerPopup.classList.remove('show');
+      partnerPopup.hidden=true;
+    }
+  }
+
+  function updatePartnerPopup(){
+    const idx=Math.round(pos);
+    if(idx!==lastPartnerIdx){
+      partnerDismissed=false;
+      lastPartnerIdx=idx;
+      renderedPartnerIdx=-1;
+    }
+    if(settledNow() && !partnerDismissed){
+      placePartner(true, idx);
+    } else {
+      placePartner(false, idx);
+    }
+  }
+
+  partnerClose.addEventListener('click',()=>{
+    partnerDismissed=true;
+    placePartner(false, Math.round(pos));
+  });
+
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
   let pos=0, target=0, dragging=false, animating=false, fromPos=0, t0=0, dur=0;
   const ease = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
@@ -273,6 +435,7 @@
     const s=settledNow();
     render(pos, s);
     placeTip(s, Math.round(pos));
+    updatePartnerPopup();
     placeThumb(pos);
     updateArrows();
   }
@@ -288,7 +451,7 @@
     if(dragging){ animating=false; return; }
     let t=(now-t0)/dur; if(t>=1)t=1;
     pos=fromPos+(target-fromPos)*ease(t);
-    render(pos,false); placeThumb(pos); placeTip(false);
+    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos));
     if(t<1){ requestAnimationFrame(tick); }
     else { animating=false; pos=target; frame(); }
   }
@@ -319,7 +482,9 @@
   next.addEventListener('click',()=>{ if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
 
   thumb.addEventListener('pointerdown',e=>{
-    dragging=true; animating=false; thumb.setPointerCapture(e.pointerId);
+    dragging=true; animating=false;
+    placePartner(false, Math.round(pos));
+    thumb.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
   thumb.addEventListener('pointermove',e=>{
@@ -328,7 +493,7 @@
     let x=e.clientX-left-tw/2;
     let p=((x-TRACK_INSET)/travel)*(N-1);
     pos=Math.max(0,Math.min(N-1,p));
-    render(pos,false); placeThumb(pos); placeTip(false); updateArrows();
+    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos)); updateArrows();
   });
   function endDrag(e){
     if(!dragging)return; dragging=false;
@@ -350,7 +515,13 @@
     if(e.key==='ArrowLeft'){ if(!prev.disabled)prev.click(); }
   });
 
-  window.addEventListener('resize',()=>{ placeThumb(pos); if(settledNow())placeTip(true,Math.round(pos)); });
+  window.addEventListener('resize',()=>{
+    placeThumb(pos);
+    if(settledNow()){
+      placeTip(true,Math.round(pos));
+      updatePartnerPopup();
+    }
+  });
 
   frame();
 })();
