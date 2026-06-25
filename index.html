@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>World View</title>
+<title>Global Design Partners</title>
 <style>
   :root{
     --bg:#e8dfc7;
@@ -27,7 +27,7 @@
     background:var(--bg);
     border:5px solid var(--win-border);
     box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
-    image-rendering:pixelated;
+    image-rendering:pixelated; image-rendering:crisp-edges;
     display:flex; flex-direction:column;
     user-select:none;
   }
@@ -49,22 +49,22 @@
   }
   .winbtn b{transform:translateY(-1px)}
   .stage{position:relative; padding:0; background:var(--bg)}
-  canvas#globe{display:block; width:100%; height:auto; image-rendering:pixelated; background:var(--bg)}
+  canvas#globe{display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; background:var(--bg)}
   .tip{
     position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
     transform-origin:50% 120%;
     background:#fffef6; color:var(--ink);
     border:2px solid var(--win-border);
     box-shadow:3px 3px 0 rgba(0,0,0,.25);
-    padding:5px 9px; font-size:13px; font-weight:700; white-space:nowrap;
+    padding:8px 12px; font-size:16px; font-weight:700; white-space:nowrap;
     opacity:0; pointer-events:none;
     transition:opacity .14s steps(3), transform .14s steps(3);
   }
   .tip.show{opacity:1; transform:translate(-50%,-100%) scale(1)}
-  .tip .sub{display:block; font-weight:400; font-size:11px; color:#6a5a2c; margin-top:1px}
+  .tip .sub{display:block; font-weight:400; font-size:14px; color:#6a5a2c; margin-top:2px}
   .tip:after{
-    content:""; position:absolute; left:50%; bottom:-7px; width:6px; height:6px;
-    margin-left:-3px; background:#fffef6;
+    content:""; position:absolute; left:50%; bottom:-8px; width:8px; height:8px;
+    margin-left:-4px; background:#fffef6;
     border-right:2px solid var(--win-border); border-bottom:2px solid var(--win-border);
     transform:rotate(45deg);
   }
@@ -87,7 +87,7 @@
   .track{position:relative; flex:1 1 auto; background:#f1ead4;
     box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
   .thumb{
-    position:absolute; top:6px; bottom:6px; width:120px;
+    position:absolute; top:6px; bottom:6px; width:56px;
     background:var(--bar); border:2px solid var(--win-border);
     box-shadow:inset 0 2px 0 rgba(255,255,255,.25);
     cursor:grab; touch-action:none;
@@ -98,9 +98,9 @@
   }
 </style>
 
-<div class="window" role="application" aria-label="World View globe explorer">
+<div class="window" role="application" aria-label="Global Design Partners globe explorer">
   <div class="titlebar">
-    <div class="title">World&nbsp;View</div>
+    <div class="title">Global&nbsp;Design&nbsp;Partners</div>
     <div class="menu"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
     <div class="winbtns">
       <div class="winbtn" title="Minimize"><b>_</b></div>
@@ -156,10 +156,11 @@
   const main = document.getElementById('globe');
   const mctx = main.getContext('2d');
   const W = main.width, H = main.height;
-  const R = 150;
+  const R = 140;
   const GLOBE = 560;
   const GX = (W-GLOBE)/2, GY = 8;
   const CX = GX+GLOBE/2, CY = GY+GLOBE/2;
+  const TRACK_INSET = 12;
 
   const buf = document.createElement('canvas'); buf.width=R; buf.height=R;
   const bctx = buf.getContext('2d');
@@ -179,7 +180,7 @@
     return [ -(a.lon+(b.lon-a.lon)*f), -(a.lat+(b.lat-a.lat)*f), 0 ];
   }
 
-  function drawBuffer(rot, settled){
+  function drawBuffer(rot){
     bctx.clearRect(0,0,R,R);
     bctx.imageSmoothingEnabled=false;
     proj.rotate(rot);
@@ -187,22 +188,37 @@
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=COL.ocean; bctx.fill();
     bctx.save(); bctx.beginPath(); path({type:'Sphere'}); bctx.clip();
     bctx.fillStyle=oceanPattern; bctx.fillRect(0,0,R,R); bctx.restore();
-    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=0.6; bctx.stroke();
+    bctx.beginPath(); path(graticule); bctx.strokeStyle=COL.grat; bctx.lineWidth=1; bctx.stroke();
     bctx.beginPath(); path(land); bctx.fillStyle=COL.land; bctx.fill();
-    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=0.6; bctx.stroke();
-    bctx.beginPath(); path(land);    bctx.strokeStyle=COL.landEdge; bctx.lineWidth=0.5; bctx.stroke();
+    bctx.beginPath(); path(borders); bctx.strokeStyle=COL.border; bctx.lineWidth=1; bctx.stroke();
+    bctx.beginPath(); path(land);    bctx.strokeStyle=COL.landEdge; bctx.lineWidth=1; bctx.stroke();
     const g = bctx.createRadialGradient(R/2,R/2,R*0.30, R/2,R/2,R/2-3);
-    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.80,'rgba(0,0,0,0)');
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.92,'rgba(0,0,0,0)');
     g.addColorStop(1,'rgba(8,18,38,0.42)');
     bctx.beginPath(); path({type:'Sphere'}); bctx.fillStyle=g; bctx.fill();
+  }
 
-    if(settled){
-      const tri=11, cx=R/2, cy=R/2;
-      const bx=cx-0.667*tri, by=cy-0.333*tri;
-      const tp=()=>{bctx.beginPath();bctx.moveTo(bx,by);bctx.lineTo(bx+tri,by);bctx.lineTo(bx+tri,by+tri);bctx.closePath();};
-      tp(); bctx.fillStyle=COL.markFill; bctx.fill();
-      bctx.lineWidth=1.5; bctx.lineJoin='miter'; bctx.strokeStyle=COL.markEdge; tp(); bctx.stroke();
-    }
+  function drawMarker(){
+    const tri = 44;
+    const cx = Math.round(CX);
+    const cy = Math.round(CY);
+    const bx = cx - Math.round(0.667 * tri);
+    const by = cy - Math.round(0.333 * tri);
+    const trace = () => {
+      mctx.beginPath();
+      mctx.moveTo(bx, by);
+      mctx.lineTo(bx + tri, by);
+      mctx.lineTo(bx + tri, by + tri);
+      mctx.closePath();
+    };
+    trace();
+    mctx.fillStyle = COL.markFill;
+    mctx.fill();
+    mctx.lineWidth = 2;
+    mctx.lineJoin = 'miter';
+    mctx.strokeStyle = COL.markEdge;
+    trace();
+    mctx.stroke();
   }
 
   function drawShadow(){
@@ -223,11 +239,12 @@
   }
 
   function render(pos, settled){
-    drawBuffer(rotForPos(pos), settled);
+    drawBuffer(rotForPos(pos));
     mctx.clearRect(0,0,W,H);
     drawShadow();
     mctx.imageSmoothingEnabled=false;
     mctx.drawImage(buf, 0,0,R,R, GX,GY,GLOBE,GLOBE);
+    if(settled) drawMarker();
   }
 
   const tip=document.getElementById('tip');
@@ -239,7 +256,7 @@
       const c=CITIES[idx]; tipCity.textContent=c.name; tipCountry.textContent=c.country;
       const sx = stageEl.clientWidth/ W;
       tip.style.left = (CX*sx) + 'px';
-      tip.style.top  = ((CY - 24)*sx) + 'px';
+      tip.style.top  = ((CY - 32)*sx) + 'px';
       tip.classList.add('show');
     } else {
       tip.classList.remove('show');
@@ -284,11 +301,12 @@
   function trackGeom(){
     const tr=track.getBoundingClientRect();
     const tw=thumb.offsetWidth;
-    return {left:tr.left, width:tr.width, tw};
+    const travel = Math.max(0, tr.width - tw - TRACK_INSET * 2);
+    return {left:tr.left, width:tr.width, tw, travel};
   }
   function placeThumb(p){
-    const {width,tw}=trackGeom();
-    const x=(p/(N-1))*(width-tw);
+    const {travel}=trackGeom();
+    const x=TRACK_INSET + (p/(N-1))*travel;
     thumb.style.left=x+'px';
   }
   function updateArrows(){
@@ -306,9 +324,9 @@
   });
   thumb.addEventListener('pointermove',e=>{
     if(!dragging)return;
-    const {left,width,tw}=trackGeom();
+    const {left,travel,tw}=trackGeom();
     let x=e.clientX-left-tw/2;
-    let p=(x/(width-tw))*(N-1);
+    let p=((x-TRACK_INSET)/travel)*(N-1);
     pos=Math.max(0,Math.min(N-1,p));
     render(pos,false); placeThumb(pos); placeTip(false); updateArrows();
   });
@@ -322,8 +340,8 @@
 
   track.addEventListener('pointerdown',e=>{
     if(e.target===thumb)return;
-    const {left,width,tw}=trackGeom();
-    let p=((e.clientX-left-tw/2)/(width-tw))*(N-1);
+    const {left,travel,tw}=trackGeom();
+    let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(N-1);
     animateTo(Math.round(Math.max(0,Math.min(N-1,p))));
   });
 
