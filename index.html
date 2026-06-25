@@ -4,14 +4,22 @@
 <title>Global Design Partners</title>
 <style>
   :root{
+    /* Ideate palette */
+    --icon:#FFCB3A;
+    --dusk:#120029;
+    --beam:#FFFFFF;
+    --bolt:#3633F8;
+    --glow:#FFAEC0;
+    --mist:#A8A1E5;
+    /* UI tokens */
     --bg:#e8dfc7;
-    --win-border:#12233d;
-    --bar:#bf4b2b;
-    --bar-text:#ffffff;
-    --ink:#1a1206;
-    --btn-face:#e8dfc7;
-    --ocean:#2c7fd0;
-    --shadow-dot:#b6ab8c;
+    --win-border:var(--dusk);
+    --bar:var(--dusk);
+    --bar-text:var(--beam);
+    --ink:var(--dusk);
+    --btn-face:#ebe6f7;
+    --ocean:var(--bolt);
+    --shadow-dot:#c9c3e8;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -53,7 +61,7 @@
   .tip{
     position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
     transform-origin:50% 120%;
-    background:#fffef6; color:var(--ink);
+    background:var(--beam); color:var(--ink);
     border:2px solid var(--win-border);
     box-shadow:3px 3px 0 rgba(0,0,0,.25);
     padding:8px 12px; font-size:16px; font-weight:700; white-space:nowrap;
@@ -61,10 +69,10 @@
     transition:opacity .14s steps(3), transform .14s steps(3);
   }
   .tip.show{opacity:1; transform:translate(-50%,-100%) scale(1)}
-  .tip .sub{display:block; font-weight:400; font-size:14px; color:#6a5a2c; margin-top:2px}
+  .tip .sub{display:block; font-weight:400; font-size:14px; color:#4a3d6b; margin-top:2px}
   .tip:after{
     content:""; position:absolute; left:50%; bottom:-8px; width:8px; height:8px;
-    margin-left:-4px; background:#fffef6;
+    margin-left:-4px; background:var(--beam);
     border-right:2px solid var(--win-border); border-bottom:2px solid var(--win-border);
     transform:rotate(45deg);
   }
@@ -80,22 +88,22 @@
   }
   .arrow.left{border-right:3px solid var(--win-border)}
   .arrow.right{border-left:3px solid var(--win-border)}
-  .arrow:active{background:#d8cfb4}
+  .arrow:active{background:var(--glow)}
   .arrow:disabled{cursor:default; opacity:.45}
   .arrow svg{width:18px;height:18px}
-  .arrow .gly{fill:var(--ink)}
-  .track{position:relative; flex:1 1 auto; background:#f1ead4;
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+  .arrow .gly{fill:var(--dusk)}
+  .track{position:relative; flex:1 1 auto; background:#ddd8f2;
+    box-shadow:inset 0 0 0 1px rgba(18,0,41,.12)}
   .thumb{
     position:absolute; top:6px; bottom:6px; width:56px;
-    background:var(--bar); border:2px solid var(--win-border);
-    box-shadow:inset 0 2px 0 rgba(255,255,255,.25);
+    background:var(--dusk); border:2px solid var(--win-border);
+    box-shadow:inset 0 2px 0 rgba(168,161,229,.45);
     cursor:grab; touch-action:none;
   }
   .thumb:active{cursor:grabbing}
   .partner-popup{
     position:absolute; left:20px; bottom:20px; width:230px;
-    background:var(--partner-surface,#f7f4ef);
+    background:var(--partner-surface,#faf8ff);
     border:3px solid var(--win-border);
     box-shadow:4px 4px 0 rgba(0,0,0,.28);
     opacity:0; pointer-events:none;
@@ -106,18 +114,18 @@
   .partner-popup.show{opacity:1; pointer-events:auto}
   .partner-titlebar{
     position:relative; height:30px;
-    background:var(--partner-accent,#2c7fd0);
+    background:var(--bolt);
     border-bottom:3px solid var(--win-border);
   }
   .partner-close{
     position:absolute; right:5px; top:6px;
     width:15px; height:15px; padding:0;
-    background:#c42b2b; border:2px solid var(--win-border);
-    color:#fff; font-size:9px; line-height:1;
+    background:var(--glow); border:2px solid var(--win-border);
+    color:var(--dusk); font-size:9px; line-height:1;
     cursor:pointer; display:grid; place-items:center;
     font-family:inherit; font-weight:700;
   }
-  .partner-close:active{background:#a82424}
+  .partner-close:active{background:#ff8faa}
   .partner-body{padding:14px 14px 16px}
   .partner-logo{
     display:flex; align-items:center; justify-content:center;
@@ -128,7 +136,7 @@
     image-rendering:pixelated; image-rendering:crisp-edges;
   }
   .partner-logo .firm-fallback{
-    color:var(--partner-accent,#2c7fd0);
+    color:var(--bolt);
     font-family:Georgia,"Times New Roman",serif;
     font-size:26px; font-weight:400; text-align:center;
     line-height:1.15;
@@ -138,10 +146,10 @@
     display:flex; flex-direction:column; gap:8px;
   }
   .partner-tags li{
-    background:var(--partner-tag-bg,#f3b50b);
-    border:2px solid var(--partner-accent,#2c7fd0);
-    box-shadow:3px 3px 0 var(--partner-accent,#2c7fd0);
-    color:var(--partner-tag-text,#12233d);
+    background:var(--partner-tag-bg,var(--icon));
+    border:2px solid var(--bolt);
+    box-shadow:3px 3px 0 var(--bolt);
+    color:var(--partner-tag-text,var(--dusk));
     font-size:12px; font-weight:700; text-align:center;
     padding:7px 8px; line-height:1.25;
   }
@@ -202,7 +210,7 @@
         logoFile:'sweetwater.png',
         logoAlt:'Sweetwater logo',
         tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
-        tagBg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
     {
@@ -211,7 +219,7 @@
         firm:'Bopinc',
         logoAlt:'Bopinc logo',
         tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
-        tagBg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
     {
@@ -220,7 +228,7 @@
         firm:'Yux Design',
         logoAlt:'Yux Design logo',
         tags:['User Research','Remote Workshops','UX Design'],
-        tagBg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
     {
@@ -229,7 +237,7 @@
         firm:'IDEO',
         logoAlt:'IDEO logo',
         tags:['Illustration','UX Design','User Research','Presentation Design'],
-        tagBg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
   ];
@@ -267,11 +275,11 @@
   const borders = topojson.mesh(topo, topo.objects.countries, (a,b)=>a!==b);
 
   const COL = {
-    ocean:'#2c7fd0', oceanLt:'#4f9ce0', oceanEdge:'#1f63aa',
-    land:'#f3b50b',  landEdge:'#c8920a', border:'#2e2208',
-    grat:'rgba(168,210,245,0.55)',
-    markFill:'#f6c40a', markEdge:'#211806',
-    shadow:'#b6ab8c'
+    ocean:'#3633F8', oceanLt:'#A8A1E5', oceanEdge:'#2a28c4',
+    land:'#FFCB3A',  landEdge:'#e0b832', border:'#120029',
+    grat:'rgba(168,161,229,0.65)',
+    markFill:'#FFCB3A', markEdge:'#120029',
+    shadow:'#c9c3e8'
   };
 
   const main = document.getElementById('globe');
@@ -400,8 +408,8 @@
     if(idx===renderedPartnerIdx) return;
     renderedPartnerIdx=idx;
     const partner=CITIES[idx].partner;
-    partnerPopup.style.setProperty('--partner-tag-bg', partner.tagBg || '#f3b50b');
-    partnerPopup.style.setProperty('--partner-accent', partner.accent);
+    partnerPopup.style.setProperty('--partner-tag-bg', partner.tagBg || '#FFCB3A');
+    partnerPopup.style.setProperty('--partner-accent', partner.accent || '#3633F8');
     partnerTags.innerHTML='';
     partner.tags.forEach(tag=>{
       const li=document.createElement('li');
