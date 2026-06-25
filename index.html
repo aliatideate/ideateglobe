@@ -94,12 +94,12 @@
   }
   .thumb:active{cursor:grabbing}
   .partner-popup{
-    position:absolute; left:0; top:0; width:200px;
-    background:var(--partner-bg,#f3b50b);
+    position:absolute; left:20px; bottom:20px; width:230px;
+    background:var(--partner-surface,#f7f4ef);
     border:3px solid var(--win-border);
     box-shadow:4px 4px 0 rgba(0,0,0,.28);
     opacity:0; pointer-events:none;
-    transform-origin:0 0;
+    transform-origin:0 100%;
     transition:opacity .14s steps(3);
     z-index:2;
   }
@@ -118,32 +118,32 @@
     font-family:inherit; font-weight:700;
   }
   .partner-close:active{background:#a82424}
-  .partner-body{padding:10px 12px 12px}
+  .partner-body{padding:14px 14px 16px}
   .partner-logo{
     display:flex; align-items:center; justify-content:center;
-    min-height:72px; margin-bottom:10px;
+    min-height:108px; margin-bottom:14px;
   }
   .partner-logo img{
-    display:block; max-width:100%; max-height:80px;
+    display:block; max-width:100%; max-height:120px;
     image-rendering:pixelated; image-rendering:crisp-edges;
   }
   .partner-logo .firm-fallback{
     color:var(--partner-accent,#2c7fd0);
     font-family:Georgia,"Times New Roman",serif;
-    font-size:22px; font-weight:400; text-align:center;
+    font-size:26px; font-weight:400; text-align:center;
     line-height:1.15;
   }
   .partner-tags{
     list-style:none; margin:0; padding:0;
-    display:flex; flex-direction:column; gap:6px;
+    display:flex; flex-direction:column; gap:8px;
   }
   .partner-tags li{
-    background:var(--partner-bg,#f3b50b);
+    background:var(--partner-tag-bg,#f3b50b);
     border:2px solid var(--partner-accent,#2c7fd0);
     box-shadow:3px 3px 0 var(--partner-accent,#2c7fd0);
     color:var(--partner-accent,#2c7fd0);
-    font-size:11px; font-weight:700; text-align:center;
-    padding:5px 6px; line-height:1.2;
+    font-size:12px; font-weight:700; text-align:center;
+    padding:7px 8px; line-height:1.25;
   }
   @media (prefers-reduced-motion:reduce){
     .tip,.partner-popup{transition:none}
@@ -214,7 +214,7 @@
         logo:'assets/partners/sweetwater.png',
         logoAlt:'Sweetwater logo',
         tags:['Market research','GTM Strategy','Research workshops','Prototyping & User Testing'],
-        bg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
@@ -222,7 +222,7 @@
       partner:{
         firm:'Partner name TBD',
         tags:['Service tag 1','Service tag 2','Service tag 3'],
-        bg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
@@ -230,7 +230,7 @@
       partner:{
         firm:'Partner name TBD',
         tags:['Service tag 1','Service tag 2','Service tag 3'],
-        bg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
@@ -238,11 +238,13 @@
       partner:{
         firm:'Partner name TBD',
         tags:['Service tag 1','Service tag 2','Service tag 3'],
-        bg:'#f3b50b', accent:'#2c7fd0'
+        tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
   ];
   const N = CITIES.length;
+  const REVEAL_DELAY_MS = 2000;
+  const POPUP_INSET = 20;
 
   const main = document.getElementById('globe');
   const mctx = main.getContext('2d');
@@ -335,7 +337,7 @@
     drawShadow();
     mctx.imageSmoothingEnabled=false;
     mctx.drawImage(buf, 0,0,R,R, GX,GY,GLOBE,GLOBE);
-    if(settled) drawMarker();
+    if(settled && revealReady()) drawMarker();
   }
 
   const tip=document.getElementById('tip');
@@ -359,6 +361,7 @@
   const partnerTags=document.getElementById('partnerTags');
   const partnerClose=document.getElementById('partnerClose');
   let partnerDismissed=false, lastPartnerIdx=0, renderedPartnerIdx=-1;
+  let settledSince=0, lastSettledIdx=-1, revealTimer=null;
 
   function showFirmFallback(partner){
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
@@ -368,7 +371,7 @@
     if(idx===renderedPartnerIdx) return;
     renderedPartnerIdx=idx;
     const partner=CITIES[idx].partner;
-    partnerPopup.style.setProperty('--partner-bg', partner.bg);
+    partnerPopup.style.setProperty('--partner-tag-bg', partner.tagBg || '#f3b50b');
     partnerPopup.style.setProperty('--partner-accent', partner.accent);
     partnerTags.innerHTML='';
     partner.tags.forEach(tag=>{
@@ -390,11 +393,9 @@
 
   function placePartner(show, idx){
     const sx=stageEl.clientWidth/W;
-    const partner=CITIES[idx].partner;
-    const leftPct=partner.popupLeft ?? 0.06;
-    const topPct=partner.popupTop ?? 0.52;
-    partnerPopup.style.left=(W*leftPct*sx)+'px';
-    partnerPopup.style.top=(H*topPct*sx)+'px';
+    partnerPopup.style.left=(POPUP_INSET*sx)+'px';
+    partnerPopup.style.bottom=(POPUP_INSET*sx)+'px';
+    partnerPopup.style.top='auto';
     partnerPopup.style.transform='scale('+sx+')';
     if(show){
       partnerPopup.hidden=false;
@@ -406,6 +407,34 @@
     }
   }
 
+  function revealReady(){
+    if(!settledNow()) return false;
+    if(reduce) return true;
+    return Date.now()-settledSince >= REVEAL_DELAY_MS;
+  }
+
+  function scheduleReveal(){
+    clearTimeout(revealTimer);
+    if(!settledNow()) return;
+    if(reduce){ frame(); return; }
+    const remaining=Math.max(0, REVEAL_DELAY_MS-(Date.now()-settledSince));
+    revealTimer=setTimeout(frame, remaining);
+  }
+
+  function trackSettlement(){
+    if(settledNow()){
+      const idx=Math.round(pos);
+      if(idx!==lastSettledIdx){
+        settledSince=Date.now();
+        lastSettledIdx=idx;
+        scheduleReveal();
+      }
+    } else if(lastSettledIdx!==-1){
+      lastSettledIdx=-1;
+      clearTimeout(revealTimer);
+    }
+  }
+
   function updatePartnerPopup(){
     const idx=Math.round(pos);
     if(idx!==lastPartnerIdx){
@@ -413,7 +442,7 @@
       lastPartnerIdx=idx;
       renderedPartnerIdx=-1;
     }
-    if(settledNow() && !partnerDismissed){
+    if(settledNow() && revealReady() && !partnerDismissed){
       placePartner(true, idx);
     } else {
       placePartner(false, idx);
@@ -433,6 +462,7 @@
 
   function frame(){
     const s=settledNow();
+    trackSettlement();
     render(pos, s);
     placeTip(s, Math.round(pos));
     updatePartnerPopup();
@@ -442,6 +472,7 @@
 
   function animateTo(idx){
     idx=Math.max(0,Math.min(N-1,idx));
+    clearTimeout(revealTimer);
     if(reduce){ pos=target=idx; animating=false; frame(); return; }
     fromPos=pos; target=idx; t0=performance.now();
     dur=Math.max(240, Math.abs(target-fromPos)*620);
@@ -483,6 +514,7 @@
 
   thumb.addEventListener('pointerdown',e=>{
     dragging=true; animating=false;
+    clearTimeout(revealTimer);
     placePartner(false, Math.round(pos));
     thumb.setPointerCapture(e.pointerId);
     e.preventDefault();
