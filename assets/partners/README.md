@@ -1,13 +1,13 @@
 # Partner logos
 
-Drop partner logo PNG files here. The globe popup references them from each city's `partner.logo` field in `index.html`.
+Drop partner logo PNG files here. Each city's `partner.logo` field in `index.html` references these paths.
 
 | File | City | Partner |
 |------|------|---------|
 | `sweetwater.png` | Dubai | Sweetwater |
-| `amsterdam.png` | Amsterdam | (TBD) |
-| `dakar.png` | Dakar | (TBD) |
-| `new-york.png` | New York City | (TBD) |
+| `bopinc.png` | Amsterdam | Bopinc |
+| `yux-design.png` | Dakar | Yux Design |
+| `ideo.png` | New York City | IDEO |
 
 If a logo file is missing, the popup shows the firm name as text instead.
 

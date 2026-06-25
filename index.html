@@ -141,7 +141,7 @@
     background:var(--partner-tag-bg,#f3b50b);
     border:2px solid var(--partner-accent,#2c7fd0);
     box-shadow:3px 3px 0 var(--partner-accent,#2c7fd0);
-    color:var(--partner-accent,#2c7fd0);
+    color:var(--partner-tag-text,#12233d);
     font-size:12px; font-weight:700; text-align:center;
     padding:7px 8px; line-height:1.25;
   }
@@ -213,36 +213,43 @@
         firm:'sweetwater.',
         logo:'assets/partners/sweetwater.png',
         logoAlt:'Sweetwater logo',
-        tags:['Market research','GTM Strategy','Research workshops','Prototyping & User Testing'],
+        tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
       name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
       partner:{
-        firm:'Partner name TBD',
-        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        firm:'Bopinc',
+        logo:'assets/partners/bopinc.png',
+        logoAlt:'Bopinc logo',
+        tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
       name:'Dakar', country:'Senegal', lon:-17.45, lat:14.69,
       partner:{
-        firm:'Partner name TBD',
-        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        firm:'Yux Design',
+        logo:'assets/partners/yux-design.png',
+        logoAlt:'Yux Design logo',
+        tags:['User Research','Remote Workshops','UX Design'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
     {
       name:'New York City', country:'United States', lon:-74.00, lat:40.71,
       partner:{
-        firm:'Partner name TBD',
-        tags:['Service tag 1','Service tag 2','Service tag 3'],
+        firm:'IDEO',
+        logo:'assets/partners/ideo.png',
+        logoAlt:'IDEO logo',
+        tags:['Illustration','UX Design','User Research','Presentation Design'],
         tagBg:'#f3b50b', accent:'#2c7fd0'
       }
     },
   ];
   const N = CITIES.length;
+  const DUBAI_IDX = 0;
   const REVEAL_DELAY_MS = 2000;
   const POPUP_INSET = 20;
 
@@ -362,6 +369,7 @@
   const partnerClose=document.getElementById('partnerClose');
   let partnerDismissed=false, lastPartnerIdx=0, renderedPartnerIdx=-1;
   let settledSince=0, lastSettledIdx=-1, revealTimer=null;
+  let dubaiRevealPending=true;
 
   function showFirmFallback(partner){
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
@@ -407,18 +415,35 @@
     }
   }
 
+  function revealDelayMs(idx){
+    if(reduce) return 0;
+    if(idx===DUBAI_IDX && dubaiRevealPending) return REVEAL_DELAY_MS;
+    return 0;
+  }
+
   function revealReady(){
     if(!settledNow()) return false;
-    if(reduce) return true;
-    return Date.now()-settledSince >= REVEAL_DELAY_MS;
+    const idx=Math.round(pos);
+    const delay=revealDelayMs(idx);
+    if(delay===0) return true;
+    return Date.now()-settledSince>=delay;
   }
 
   function scheduleReveal(){
     clearTimeout(revealTimer);
     if(!settledNow()) return;
-    if(reduce){ frame(); return; }
-    const remaining=Math.max(0, REVEAL_DELAY_MS-(Date.now()-settledSince));
-    revealTimer=setTimeout(frame, remaining);
+    const idx=Math.round(pos);
+    const delay=revealDelayMs(idx);
+    if(delay===0){
+      if(idx===DUBAI_IDX) dubaiRevealPending=false;
+      frame();
+      return;
+    }
+    const remaining=Math.max(0, delay-(Date.now()-settledSince));
+    revealTimer=setTimeout(()=>{
+      if(Math.round(pos)===DUBAI_IDX) dubaiRevealPending=false;
+      frame();
+    }, remaining);
   }
 
   function trackSettlement(){
@@ -463,8 +488,10 @@
   function frame(){
     const s=settledNow();
     trackSettlement();
+    const idx=Math.round(pos);
+    const showUi=s && revealReady();
     render(pos, s);
-    placeTip(s, Math.round(pos));
+    placeTip(showUi, idx);
     updatePartnerPopup();
     placeThumb(pos);
     updateArrows();
@@ -550,7 +577,8 @@
   window.addEventListener('resize',()=>{
     placeThumb(pos);
     if(settledNow()){
-      placeTip(true,Math.round(pos));
+      const idx=Math.round(pos);
+      placeTip(revealReady(), idx);
       updatePartnerPopup();
     }
   });
