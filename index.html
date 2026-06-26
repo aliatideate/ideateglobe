@@ -225,13 +225,13 @@
   .demo-cursor.is-pointer .demo-cursor-default{display:none}
   .demo-cursor.is-pointer .demo-cursor-pointer{display:block}
   .intro-tagline{
-    position:absolute; left:50%; top:clamp(28px, 9%, 56px);
-    width:min(88%, 320px); margin:0;
+    position:absolute; left:50%; top:6%;
+    width:min(86%, 340px); margin:0;
     transform:translate(-50%, -120%);
     font-family:Manrope, Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
-    font-weight:500; font-size:clamp(15px, 4.2vw, 20px); line-height:1.35;
+    font-weight:500; font-size:clamp(14px, 3.8vw, 18px); line-height:1.4;
     color:var(--beam); text-align:center;
-    opacity:0; pointer-events:none; z-index:2;
+    opacity:0; pointer-events:none; z-index:3;
     transition:opacity .5s ease, transform .5s ease;
   }
   .intro-tagline.is-visible{
@@ -239,9 +239,9 @@
     transform:translate(-50%, 0);
   }
   .intro-logo{
-    position:absolute; left:50%; bottom:clamp(28px, 7%, 48px);
+    position:absolute; left:50%; bottom:5%;
     transform:translate(-50%, 120%);
-    opacity:0; pointer-events:none; z-index:2;
+    opacity:0; pointer-events:none; z-index:3;
     transition:opacity .5s ease, transform .5s ease;
   }
   .intro-logo.is-visible{
@@ -249,7 +249,7 @@
     transform:translate(-50%, 0);
   }
   .intro-logo img{
-    display:block; width:min(72vw, 280px); height:auto;
+    display:block; width:min(76vw, 300px); height:auto;
   }
   .folder-launch{
     position:absolute; left:50%; top:50%;
@@ -296,13 +296,13 @@
 </style>
 
 <div class="canvas" id="canvas">
-  <p class="intro-tagline" id="introTagline" hidden>Some of the world's best<br>design firms work with us</p>
+  <p class="intro-tagline" id="introTagline" hidden>Some of the world's best<br>design firms work with us.</p>
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Ideate's Collaborators" hidden>
     <img src="assets/collaborators-folder-icon.png" alt="" width="146" height="117" decoding="async">
     <span class="folder-label">Ideate's<br>Collaborators</span>
   </button>
   <div class="intro-logo" id="introLogo" hidden>
-    <img src="assets/Ideate-logo.png" alt="Ideate Innovation" width="280" height="32" decoding="async">
+    <img src="assets/Ideate-logo.svg" alt="Ideate Innovation" width="300" height="34" decoding="async">
   </div>
 <div class="window" id="appWindow" role="application" aria-label="Ideate's Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
@@ -774,20 +774,9 @@
     updateArrows();
   }
 
-  function hideIntroChrome(){
-    introTagline.classList.remove('is-visible');
-    introLogo.classList.remove('is-visible');
-    const ms = reduce ? 0 : 500;
-    setTimeout(()=>{
-      introTagline.hidden = true;
-      introLogo.hidden = true;
-    }, ms);
-  }
-
   function openApp(){
     if(appLaunched) return;
     appLaunched = true;
-    hideIntroChrome();
     const animMs = reduce ? 0 : 520;
     folderLaunch.classList.add('is-opening');
     appWindow.hidden = false;
