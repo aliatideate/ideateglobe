@@ -225,14 +225,14 @@
   .demo-cursor.is-pointer .demo-cursor-default{display:none}
   .demo-cursor.is-pointer .demo-cursor-pointer{display:block}
   .intro-tagline{
-    position:absolute; left:50%; top:6%;
+    position:absolute; left:50%; top:calc(6% + 5px);
     width:min(92%, 510px); margin:0;
     transform:translate(-50%, -120%);
     font-family:Manrope, Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
-    font-weight:500; font-size:clamp(21px, 5.7vw, 27px); line-height:1.4;
+    font-weight:500; font-size:clamp(21px, 5.7vw, 27px); line-height:1.28;
     color:var(--beam); text-align:center;
     opacity:0; pointer-events:none; z-index:3;
-    transition:opacity .5s ease, transform .5s ease;
+    transition:opacity .75s ease, transform .75s ease;
   }
   .intro-tagline.is-visible{
     opacity:1;
