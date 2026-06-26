@@ -204,17 +204,22 @@
   .canvas.is-autoplay *{cursor:none !important}
   .demo-cursor{
     position:fixed; left:0; top:0;
-    width:28px; height:28px;
-    margin:-2px 0 0 -2px;
+    width:27px; height:36px;
     pointer-events:none; z-index:10000;
     opacity:0;
-    transition:left .5s cubic-bezier(.22,.85,.28,1),
-               top .5s cubic-bezier(.22,.85,.28,1),
-               transform .1s steps(2), opacity .2s steps(2);
+    transition:left .9s cubic-bezier(.33,.01,.18,1),
+               top .9s cubic-bezier(.33,.01,.18,1),
+               opacity .2s steps(2);
   }
+  .demo-cursor.is-pointer{width:24px; height:30px}
   .demo-cursor.is-visible{opacity:1}
-  .demo-cursor.is-clicking{transform:scale(.82)}
-  .demo-cursor svg{display:block; width:28px; height:28px; filter:drop-shadow(0 1px 0 rgba(0,0,0,.35))}
+  .demo-cursor img{
+    display:block; width:100%; height:100%;
+    image-rendering:auto;
+  }
+  .demo-cursor .demo-cursor-pointer{display:none}
+  .demo-cursor.is-pointer .demo-cursor-default{display:none}
+  .demo-cursor.is-pointer .demo-cursor-pointer{display:block}
   .folder-launch{
     position:absolute; left:50%; top:50%;
     transform:translate(-50%, -50%) scale(0.72);
@@ -310,10 +315,8 @@
 </div>
 
 <div class="demo-cursor" id="demoCursor" hidden aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 30" aria-hidden="true">
-    <path fill="#000" d="M10,1C8.5,1 7.5,2 7.5,3.5V12.5H6C4.5,12.5 3.5,13.5 3.5,15V16.5C3.5,18 4.5,19 6,19H7.5V21C7.5,24 9.5,26.5 12,26.5H15.5C18,26.5 20,24 20,21V14.5C20,12.5 18.5,10.5 16.5,10V9.5V4C16.5,2.5 15.5,1.5 14,1.5C12.8,1.5 12,2.2 11.3,3.2V3.5C11.3,2.2 10.5,1 9.2,1H10Z"/>
-    <path fill="#fff" d="M9.5,3C9,3 8.5,3.5 8.5,4.5V13.5H7C6.2,13.5 5.5,14.2 5.5,15V16.5C5.5,17.3 6.2,18 7,18H8.5V21C8.5,23 10,24.5 12,24.5H15C16.8,24.5 18,23 18,21V14.5C18,13 17,11.5 15.5,11V10.5V4.5C15.5,3.5 14.8,3 14,3C13.2,3 12.5,3.5 12,4.5V5C11.5,3.8 10.8,3 9.5,3Z"/>
-  </svg>
+  <img class="demo-cursor-default" src="assets/cursor-default.svg" alt="" width="27" height="36">
+  <img class="demo-cursor-pointer" src="assets/cursor-pointer.svg" alt="" width="24" height="30">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -372,7 +375,7 @@
   const AUTO_FOLDER_WAIT_MS = 2000;
   const AUTO_CITY_DWELL_MS = 4000;
   const AUTO_CTA_HOLD_MS = 3000;
-  const AUTO_CURSOR_MOVE_MS = 500;
+  const AUTO_CURSOR_MOVE_MS = 900;
   const AUTO_WINDOW_OPEN_MS = 520;
   const autoplay = !new URLSearchParams(location.search).has('manual');
   let appLaunched = false;
@@ -872,34 +875,38 @@
     return {x:r.left+r.width/2, y:r.top+r.height/2};
   }
 
+  function cursorHotspot(pointer){
+    return pointer ? {x:8, y:2} : {x:0, y:0};
+  }
+
   function cursorMoveMs(){
     return reduce ? 0 : AUTO_CURSOR_MOVE_MS;
   }
 
-  async function placeCursor(x, y, animate=true){
+  async function placeCursor(x, y, animate=true, pointer=false){
     const ms=animate ? cursorMoveMs() : 0;
-    demoCursor.style.transitionDuration=ms ? `${ms}ms, ${ms}ms, 0ms, 0ms` : '0ms';
-    demoCursor.style.left=x+'px';
-    demoCursor.style.top=y+'px';
+    const hot=cursorHotspot(pointer);
+    demoCursor.classList.toggle('is-pointer', pointer);
+    demoCursor.style.transitionDuration=ms ? `${ms}ms, ${ms}ms, 0ms` : '0ms';
+    demoCursor.style.left=(x-hot.x)+'px';
+    demoCursor.style.top=(y-hot.y)+'px';
     if(ms) await sleep(ms);
   }
 
-  async function moveCursorTo(el, from=null){
+  async function moveCursorTo(el, {from=null, pointer=true}={}){
     const {x, y}=centerOf(el);
     if(from){
-      await placeCursor(from.x, from.y, false);
+      await placeCursor(from.x, from.y, false, false);
       demoCursor.hidden=false;
       demoCursor.classList.add('is-visible');
     }
-    await placeCursor(x, y, true);
+    await placeCursor(x, y, true, pointer);
   }
 
   async function demoClick(el, action, from=null){
-    await moveCursorTo(el, from);
-    demoCursor.classList.add('is-clicking');
-    await sleep(reduce ? 0 : 120);
+    await moveCursorTo(el, {from, pointer:true});
+    await sleep(reduce ? 0 : 100);
     action();
-    demoCursor.classList.remove('is-clicking');
   }
 
   async function waitForCityStop(stop){
