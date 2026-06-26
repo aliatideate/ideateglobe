@@ -20,8 +20,6 @@
     --btn-face:#ebe6f7;
     --ocean:var(--bolt);
     --shadow-dot:#c9c3e8;
-    --cursor-default:url('assets/cursor-default.svg') 0 0, default;
-    --cursor-pointer:url('assets/cursor-pointer.svg') 8 2, pointer;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -31,7 +29,7 @@
     font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     -webkit-font-smoothing:none;
     padding:0;
-    cursor:var(--cursor-default);
+    cursor:default;
   }
   .canvas{
     position:relative;
@@ -40,17 +38,9 @@
     max-height:100vh;
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
-    background:linear-gradient(180deg, var(--mist) 0%, var(--dusk) 100%);
-    cursor:var(--cursor-default);
-  }
-  .canvas::before{
-    content:"";
-    position:absolute; inset:0;
-    pointer-events:none;
-    background-image:radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px);
-    background-size:5px 5px;
-    mix-blend-mode:overlay;
-    image-rendering:pixelated;
+    background:var(--dusk) center/cover no-repeat;
+    background-image:url('assets/bg.png');
+    cursor:default;
   }
   .window{
     position:relative; z-index:1;
@@ -63,7 +53,7 @@
     image-rendering:pixelated; image-rendering:crisp-edges;
     display:flex; flex-direction:column;
     user-select:none;
-    cursor:var(--cursor-default);
+    cursor:default;
   }
   .titlebar{
     background:var(--bar); color:var(--bar-text);
@@ -77,7 +67,7 @@
   .winbtn{
     width:22px;height:22px; border:2px solid var(--bar-text);
     display:grid; place-items:center; font-size:12px; line-height:1;
-    color:var(--bar-text); cursor:var(--cursor-default); background:transparent;
+    color:var(--bar-text); cursor:default; background:transparent;
   }
   .winbtn b{transform:translateY(-1px)}
   .stage{position:relative; padding:0; background:var(--bg)}
@@ -96,7 +86,7 @@
     box-shadow:5px 5px 0 var(--bolt);
     font:700 18px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     padding:17px 26px; white-space:nowrap;
-    cursor:var(--cursor-pointer);
+    cursor:pointer;
     opacity:0; pointer-events:none;
     transition:opacity .14s steps(3), transform .14s steps(3);
     z-index:3;
@@ -131,13 +121,13 @@
   }
   .arrow{
     width:46px; flex:0 0 46px; background:var(--btn-face);
-    border:none; cursor:var(--cursor-pointer); display:grid; place-items:center;
+    border:none; cursor:pointer; display:grid; place-items:center;
     position:relative;
   }
   .arrow.left{border-right:3px solid var(--win-border)}
   .arrow.right{border-left:3px solid var(--win-border)}
   .arrow:active{background:var(--glow)}
-  .arrow:disabled{cursor:var(--cursor-default); opacity:.45}
+  .arrow:disabled{cursor:default; opacity:.45}
   .arrow svg{width:18px;height:18px}
   .arrow .gly{fill:var(--dusk)}
   .track{position:relative; flex:1 1 auto; background:#ddd8f2;
@@ -146,9 +136,9 @@
     position:absolute; top:6px; bottom:6px; width:56px;
     background:var(--dusk); border:2px solid var(--win-border);
     box-shadow:inset 0 2px 0 rgba(168,161,229,.45);
-    cursor:var(--cursor-pointer); touch-action:none;
+    cursor:pointer; touch-action:none;
   }
-  .thumb:active{cursor:var(--cursor-pointer)}
+  .thumb:active{cursor:pointer}
   .partner-popup{
     position:absolute; left:20px; bottom:20px; width:230px;
     background:var(--partner-surface,#faf8ff);
@@ -170,7 +160,7 @@
     width:15px; height:15px; padding:0;
     background:var(--glow); border:2px solid var(--win-border);
     color:var(--dusk); font-size:9px; line-height:1;
-    cursor:var(--cursor-pointer); display:grid; place-items:center;
+    cursor:pointer; display:grid; place-items:center;
     font-family:inherit; font-weight:700;
   }
   .partner-close:active{background:#ff8faa}
@@ -207,7 +197,7 @@
     z-index:2;
     display:grid; place-items:center;
     padding:0; border:none; background:transparent;
-    cursor:var(--cursor-pointer);
+    cursor:pointer;
     image-rendering:pixelated; image-rendering:crisp-edges;
     transition:opacity .18s steps(4), transform .18s steps(4);
   }
@@ -230,7 +220,7 @@
 
 <div class="canvas">
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Collaborators">
-    <img src="assets/collaborators-folder.png" alt="" width="208" height="247" decoding="async">
+    <img src="assets/collaborators-folder.png" alt="" width="208" height="254" decoding="async">
   </button>
 <div class="window" id="appWindow" role="application" aria-label="Global Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
