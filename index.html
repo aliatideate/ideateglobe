@@ -200,6 +200,21 @@
     font-size:12px; font-weight:700; text-align:center;
     padding:7px 8px; line-height:1.25;
   }
+  .canvas.is-autoplay{cursor:none; pointer-events:none}
+  .canvas.is-autoplay *{cursor:none !important}
+  .demo-cursor{
+    position:fixed; left:0; top:0;
+    width:28px; height:28px;
+    margin:-2px 0 0 -2px;
+    pointer-events:none; z-index:10000;
+    opacity:0;
+    transition:left .5s cubic-bezier(.22,.85,.28,1),
+               top .5s cubic-bezier(.22,.85,.28,1),
+               transform .1s steps(2), opacity .2s steps(2);
+  }
+  .demo-cursor.is-visible{opacity:1}
+  .demo-cursor.is-clicking{transform:scale(.82)}
+  .demo-cursor svg{display:block; width:28px; height:28px; filter:drop-shadow(0 1px 0 rgba(0,0,0,.35))}
   .folder-launch{
     position:absolute; left:50%; top:50%;
     transform:translate(-50%, -50%) scale(0.72);
@@ -241,13 +256,13 @@
     100%{opacity:1; transform:scale(1)}
   }
   @media (prefers-reduced-motion:reduce){
-    .tip,.partner-popup,.folder-launch,.map-cta-wrap{transition:none}
+    .tip,.partner-popup,.folder-launch,.map-cta-wrap,.demo-cursor{transition:none}
     .window.is-opening{animation:none}
     canvas#globe{transition:none}
   }
 </style>
 
-<div class="canvas">
+<div class="canvas" id="canvas">
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Ideate's Collaborators" hidden>
     <img src="assets/collaborators-folder-icon.png" alt="" width="146" height="117" decoding="async">
     <span class="folder-label">Ideate's<br>Collaborators</span>
@@ -292,6 +307,13 @@
     </button>
   </div>
 </div>
+</div>
+
+<div class="demo-cursor" id="demoCursor" hidden aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 30" aria-hidden="true">
+    <path fill="#000" d="M10,1C8.5,1 7.5,2 7.5,3.5V12.5H6C4.5,12.5 3.5,13.5 3.5,15V16.5C3.5,18 4.5,19 6,19H7.5V21C7.5,24 9.5,26.5 12,26.5H15.5C18,26.5 20,24 20,21V14.5C20,12.5 18.5,10.5 16.5,10V9.5V4C16.5,2.5 15.5,1.5 14,1.5C12.8,1.5 12,2.2 11.3,3.2V3.5C11.3,2.2 10.5,1 9.2,1H10Z"/>
+    <path fill="#fff" d="M9.5,3C9,3 8.5,3.5 8.5,4.5V13.5H7C6.2,13.5 5.5,14.2 5.5,15V16.5C5.5,17.3 6.2,18 7,18H8.5V21C8.5,23 10,24.5 12,24.5H15C16.8,24.5 18,23 18,21V14.5C18,13 17,11.5 15.5,11V10.5V4.5C15.5,3.5 14.8,3 14,3C13.2,3 12.5,3.5 12,4.5V5C11.5,3.8 10.8,3 9.5,3Z"/>
+  </svg>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -347,8 +369,15 @@
   const REVEAL_DELAY_MS = 200;
   const FINALE_EXIT_MS = 350;
   const POPUP_INSET = 20;
+  const AUTO_FOLDER_WAIT_MS = 2000;
+  const AUTO_CITY_DWELL_MS = 4000;
+  const AUTO_CTA_HOLD_MS = 3000;
+  const AUTO_CURSOR_MOVE_MS = 500;
+  const AUTO_WINDOW_OPEN_MS = 520;
+  const autoplay = !new URLSearchParams(location.search).has('manual');
   let appLaunched = false;
   let finalePhase = 'explore';
+  let autoplayActive = false;
 
   const folderLaunch = document.getElementById('folderLaunch');
   const folderImg = folderLaunch.querySelector('img');
@@ -356,6 +385,8 @@
   const mapCtaWrap = document.getElementById('mapCtaWrap');
   const mapCta = document.getElementById('mapCta');
   const scrollbarEl = document.getElementById('scrollbar');
+  const canvasEl = document.getElementById('canvas');
+  const demoCursor = document.getElementById('demoCursor');
 
   function partnerLogoSrc(partner){
     const file=partner.logoFile || (partner.firm + '.png');
@@ -765,10 +796,11 @@
     next.disabled = (!animating && i>=FINALE_IDX && pos>=FINALE_IDX-0.0001);
   }
 
-  prev.addEventListener('click',()=>{ if(prev.disabled)return; animateTo(Math.round(animating?target:pos)-1); });
-  next.addEventListener('click',()=>{ if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
+  prev.addEventListener('click',()=>{ if(autoplayActive)return; if(prev.disabled)return; animateTo(Math.round(animating?target:pos)-1); });
+  next.addEventListener('click',()=>{ if(autoplayActive)return; if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
 
   thumb.addEventListener('pointerdown',e=>{
+    if(autoplayActive) return;
     if(finalePhase!=='explore') return;
     dragging=true; animating=false;
     clearTimeout(revealTimer);
@@ -793,6 +825,7 @@
   thumb.addEventListener('pointercancel',endDrag);
 
   track.addEventListener('pointerdown',e=>{
+    if(autoplayActive) return;
     if(finalePhase!=='explore' || e.target===thumb)return;
     const {left,travel,tw}=trackGeom();
     let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(STOPS-1);
@@ -800,6 +833,7 @@
   });
 
   window.addEventListener('keydown',e=>{
+    if(autoplayActive) return;
     if(!appLaunched){
       if(e.target===folderLaunch && (e.key==='Enter' || e.key===' ')){
         e.preventDefault();
@@ -821,10 +855,82 @@
     }
   });
 
-  folderLaunch.addEventListener('click', openApp);
+  folderLaunch.addEventListener('click', ()=>{ if(autoplayActive) return; openApp(); });
   folderLaunch.addEventListener('keydown', e=>{
+    if(autoplayActive) return;
     if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openApp(); }
   });
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  async function waitUntil(fn, interval=50){
+    while(!fn()) await sleep(interval);
+  }
+
+  function centerOf(el){
+    const r=el.getBoundingClientRect();
+    return {x:r.left+r.width/2, y:r.top+r.height/2};
+  }
+
+  function cursorMoveMs(){
+    return reduce ? 0 : AUTO_CURSOR_MOVE_MS;
+  }
+
+  async function placeCursor(x, y, animate=true){
+    const ms=animate ? cursorMoveMs() : 0;
+    demoCursor.style.transitionDuration=ms ? `${ms}ms, ${ms}ms, 0ms, 0ms` : '0ms';
+    demoCursor.style.left=x+'px';
+    demoCursor.style.top=y+'px';
+    if(ms) await sleep(ms);
+  }
+
+  async function moveCursorTo(el, from=null){
+    const {x, y}=centerOf(el);
+    if(from){
+      await placeCursor(from.x, from.y, false);
+      demoCursor.hidden=false;
+      demoCursor.classList.add('is-visible');
+    }
+    await placeCursor(x, y, true);
+  }
+
+  async function demoClick(el, action, from=null){
+    await moveCursorTo(el, from);
+    demoCursor.classList.add('is-clicking');
+    await sleep(reduce ? 0 : 120);
+    action();
+    demoCursor.classList.remove('is-clicking');
+  }
+
+  async function waitForCityStop(stop){
+    await waitUntil(()=> settledNow() && Math.round(pos)===stop && shouldShowCityUi());
+  }
+
+  async function runAutoplay(){
+    if(!autoplay || autoplayActive) return;
+    autoplayActive=true;
+    canvasEl.classList.add('is-autoplay');
+    demoCursor.hidden=false;
+
+    await waitUntil(()=> folderLaunch.classList.contains('is-visible'));
+    await sleep(AUTO_FOLDER_WAIT_MS);
+
+    const folderCenter=centerOf(folderLaunch);
+    const entryFrom={x:window.innerWidth+48, y:folderCenter.y};
+    await demoClick(folderLaunch, openApp, entryFrom);
+    await sleep(reduce ? 0 : AUTO_WINDOW_OPEN_MS);
+
+    for(let stop=0; stop<=LAST_CITY_IDX; stop++){
+      await waitForCityStop(stop);
+      await sleep(AUTO_CITY_DWELL_MS);
+      await demoClick(next, ()=> animateTo(Math.round(pos)+1));
+      await waitUntil(()=> settledNow());
+    }
+
+    await waitUntil(()=> finalePhase==='cta' && mapCtaWrap.classList.contains('show'));
+    await moveCursorTo(mapCta);
+    await sleep(AUTO_CTA_HOLD_MS);
+  }
 
   function revealIntro(){
     const maxW = Math.min(window.innerWidth * 0.385, 146);
@@ -834,10 +940,12 @@
     folderLaunch.hidden = false;
     if(reduce){
       folderLaunch.classList.add('is-visible');
+      if(autoplay) runAutoplay();
       return;
     }
     requestAnimationFrame(()=>{
       folderLaunch.classList.add('is-visible');
+      if(autoplay) runAutoplay();
     });
   }
   revealIntro();
