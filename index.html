@@ -81,7 +81,7 @@
   .map-cta-wrap{
     position:absolute; left:50%; top:50%;
     transform:translate(-50%, -50%) scale(.92);
-    display:flex; flex-direction:column; align-items:center; gap:10px;
+    display:flex; flex-direction:column; align-items:center; gap:18px;
     opacity:0; pointer-events:none;
     transition:opacity .14s steps(3), transform .14s steps(3);
     z-index:3;
@@ -219,7 +219,7 @@
   .folder-label{
     display:block;
     color:var(--beam);
-    font:700 clamp(10px, 2.2vw, 12px)/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    font:700 clamp(13px, 3.4vw, 17px)/1.15 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     text-align:center; letter-spacing:.35px;
     max-width:min(43vw, 165px);
     text-shadow:
@@ -250,7 +250,7 @@
 <div class="canvas">
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Ideate's Collaborators" hidden>
     <img src="assets/collaborators-folder-icon.png" alt="" width="146" height="117" decoding="async">
-    <span class="folder-label">Ideate's Collaborators</span>
+    <span class="folder-label">Ideate's<br>Collaborators</span>
   </button>
 <div class="window" id="appWindow" role="application" aria-label="Ideate's Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
