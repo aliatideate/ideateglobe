@@ -81,7 +81,31 @@
   }
   .winbtn b{transform:translateY(-1px)}
   .stage{position:relative; padding:0; background:var(--bg)}
-  canvas#globe{display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; background:var(--bg)}
+  canvas#globe{
+    display:block; width:100%; height:auto;
+    image-rendering:pixelated; image-rendering:crisp-edges; background:var(--bg);
+    transform-origin:center center;
+    transition:transform .35s steps(5), opacity .35s steps(5);
+  }
+  .stage.is-exiting #globe{transform:scale(.35); opacity:0}
+  .map-cta{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%, -50%) scale(.92);
+    background:var(--icon); color:var(--dusk);
+    border:2px solid var(--dusk);
+    box-shadow:4px 4px 0 var(--bolt);
+    font:700 15px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    padding:14px 22px; white-space:nowrap;
+    cursor:var(--cursor-pointer);
+    opacity:0; pointer-events:none;
+    transition:opacity .14s steps(3), transform .14s steps(3);
+    z-index:3;
+  }
+  .map-cta.show{
+    opacity:1; pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .scrollbar.is-disabled{opacity:.55; pointer-events:none}
   .tip{
     position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
     transform-origin:50% 120%;
@@ -198,8 +222,9 @@
     100%{opacity:1; transform:scale(1)}
   }
   @media (prefers-reduced-motion:reduce){
-    .tip,.partner-popup,.folder-launch{transition:none}
+    .tip,.partner-popup,.folder-launch,.map-cta{transition:none}
     .window.is-opening{animation:none}
+    canvas#globe{transition:none}
   }
 </style>
 
@@ -229,9 +254,10 @@
         <ul class="partner-tags" id="partnerTags"></ul>
       </div>
     </div>
+    <button class="map-cta" id="mapCta" type="button" hidden>Add yours to the map</button>
   </div>
 
-  <div class="scrollbar">
+  <div class="scrollbar" id="scrollbar">
     <button class="arrow left" id="prev" aria-label="Previous location">
       <svg viewBox="0 0 18 18"><polygon class="gly" points="12,2 12,16 4,9"/></svg>
     </button>
@@ -291,13 +317,21 @@
     },
   ];
   const N = CITIES.length;
+  const STOPS = N + 1;
+  const LAST_CITY_IDX = N - 1;
+  const FINALE_IDX = STOPS - 1;
   const START_IDX = 0;
   const REVEAL_DELAY_MS = 200;
+  const FINALE_REVEAL_MS = 400;
+  const FINALE_EXIT_MS = 350;
   const POPUP_INSET = 20;
   let appLaunched = false;
+  let finalePhase = 'explore';
 
   const folderLaunch = document.getElementById('folderLaunch');
   const appWindow = document.getElementById('appWindow');
+  const mapCta = document.getElementById('mapCta');
+  const scrollbarEl = document.getElementById('scrollbar');
 
   function partnerLogoSrc(partner){
     const file=partner.logoFile || (partner.firm + '.png');
@@ -356,10 +390,15 @@
   const oceanPattern = bctx.createPattern(pat,'repeat');
 
   function rotForPos(p){
-    const i = Math.max(0, Math.min(N-2, Math.floor(p)));
-    const f = Math.max(0, Math.min(1, p - i));
+    const cityPos = Math.min(p, N - 1);
+    const i = Math.max(0, Math.min(N-2, Math.floor(cityPos)));
+    const f = Math.max(0, Math.min(1, cityPos - i));
     const a = CITIES[i], b = CITIES[i+1];
     return [ -(a.lon+(b.lon-a.lon)*f), -(a.lat+(b.lat-a.lat)*f), 0 ];
+  }
+
+  function cityIdxFromPos(p){
+    return Math.min(Math.round(p), N - 1);
   }
 
   function drawBuffer(rot){
@@ -420,13 +459,13 @@
     mctx.globalAlpha=1;
   }
 
-  function render(pos, settled){
+  function render(pos, settled, showMarker){
     drawBuffer(rotForPos(pos));
     mctx.clearRect(0,0,W,H);
     drawShadow();
     mctx.imageSmoothingEnabled=false;
     mctx.drawImage(buf, 0,0,R,R, GX,GY,GLOBE,GLOBE);
-    if(settled && revealReady()) drawMarker();
+    if(settled && showMarker) drawMarker();
   }
 
   const tip=document.getElementById('tip');
@@ -502,16 +541,67 @@
 
   function revealReady(){
     if(!settledNow()) return false;
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     const delay=revealDelayMs(idx);
     if(delay===0) return true;
     return Date.now()-settledSince>=delay;
   }
 
+  function shouldShowCityUi(){
+    if(finalePhase !== 'explore') return false;
+    const stop=Math.round(pos);
+    if(stop===LAST_CITY_IDX) return false;
+    return settledNow() && revealReady();
+  }
+
+  function shouldShowMarker(){
+    if(finalePhase==='exit' || finalePhase==='cta') return false;
+    if(!settledNow()) return false;
+    const stop=Math.round(pos);
+    if(stop===LAST_CITY_IDX || stop===FINALE_IDX) return true;
+    return shouldShowCityUi();
+  }
+
+  function disableScrollbar(){
+    scrollbarEl.classList.add('is-disabled');
+    prev.disabled=true;
+    next.disabled=true;
+  }
+
+  let finaleTimer=null;
+  function startFinale(){
+    if(finalePhase !== 'explore') return;
+    finalePhase='reveal';
+    partnerDismissed=false;
+    const dubai=LAST_CITY_IDX;
+    placeTip(true, dubai);
+    placePartner(true, dubai);
+    render(pos, true, true);
+    clearTimeout(finaleTimer);
+    const revealMs=reduce ? 0 : FINALE_REVEAL_MS;
+    finaleTimer=setTimeout(()=>{
+      if(finalePhase !== 'reveal') return;
+      finalePhase='exit';
+      placeTip(false, dubai);
+      placePartner(false, dubai);
+      stageEl.classList.add('is-exiting');
+      const exitMs=reduce ? 0 : FINALE_EXIT_MS;
+      finaleTimer=setTimeout(()=>{
+        finalePhase='cta';
+        stageEl.classList.remove('is-exiting');
+        main.style.visibility='hidden';
+        mapCta.hidden=false;
+        mapCta.classList.add('show');
+        disableScrollbar();
+        updateArrows();
+      }, exitMs);
+    }, revealMs);
+  }
+
   function scheduleReveal(){
     clearTimeout(revealTimer);
     if(!settledNow()) return;
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     const delay=revealDelayMs(idx);
     if(delay===0){
       if(idx===START_IDX) initialRevealPending=false;
@@ -520,18 +610,22 @@
     }
     const remaining=Math.max(0, delay-(Date.now()-settledSince));
     revealTimer=setTimeout(()=>{
-      if(Math.round(pos)===START_IDX) initialRevealPending=false;
+      if(cityIdxFromPos(pos)===START_IDX) initialRevealPending=false;
       frame();
     }, remaining);
   }
 
   function trackSettlement(){
     if(settledNow()){
-      const idx=Math.round(pos);
-      if(idx!==lastSettledIdx){
+      const stop=Math.round(pos);
+      if(stop!==lastSettledIdx){
         settledSince=Date.now();
-        lastSettledIdx=idx;
-        scheduleReveal();
+        lastSettledIdx=stop;
+        if(stop===FINALE_IDX && finalePhase==='explore'){
+          startFinale();
+        } else {
+          scheduleReveal();
+        }
       }
     } else if(lastSettledIdx!==-1){
       lastSettledIdx=-1;
@@ -540,22 +634,23 @@
   }
 
   function updatePartnerPopup(){
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     if(idx!==lastPartnerIdx){
       partnerDismissed=false;
       lastPartnerIdx=idx;
       renderedPartnerIdx=-1;
     }
-    if(settledNow() && revealReady() && !partnerDismissed){
+    if(shouldShowCityUi() && !partnerDismissed){
       placePartner(true, idx);
-    } else {
+    } else if(finalePhase==='explore'){
       placePartner(false, idx);
     }
   }
 
   partnerClose.addEventListener('click',()=>{
+    if(finalePhase !== 'explore') return;
     partnerDismissed=true;
-    placePartner(false, Math.round(pos));
+    placePartner(false, cityIdxFromPos(pos));
   });
 
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -566,12 +661,15 @@
 
   function frame(){
     if(!appLaunched) return;
+    if(finalePhase==='cta') return;
     const s=settledNow();
     trackSettlement();
-    const idx=Math.round(pos);
-    const showUi=s && revealReady();
-    render(pos, s);
-    placeTip(showUi, idx);
+    if(finalePhase==='reveal' || finalePhase==='exit') return;
+    const cityIdx=cityIdxFromPos(pos);
+    const showUi=shouldShowCityUi();
+    const showMarker=shouldShowMarker();
+    render(pos, s, showMarker);
+    placeTip(showUi, cityIdx);
     updatePartnerPopup();
     placeThumb(pos);
     updateArrows();
@@ -595,8 +693,8 @@
   }
 
   function animateTo(idx){
-    if(!appLaunched) return;
-    idx=Math.max(0,Math.min(N-1,idx));
+    if(!appLaunched || finalePhase==='cta' || finalePhase==='exit' || finalePhase==='reveal') return;
+    idx=Math.max(0,Math.min(FINALE_IDX,idx));
     clearTimeout(revealTimer);
     if(reduce){ pos=target=idx; animating=false; frame(); return; }
     fromPos=pos; target=idx; t0=performance.now();
@@ -607,7 +705,9 @@
     if(dragging){ animating=false; return; }
     let t=(now-t0)/dur; if(t>=1)t=1;
     pos=fromPos+(target-fromPos)*ease(t);
-    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos));
+    const cityIdx=cityIdxFromPos(pos);
+    render(pos,false,false);
+    placeThumb(pos); placeTip(false); placePartner(false, cityIdx);
     if(t<1){ requestAnimationFrame(tick); }
     else { animating=false; pos=target; frame(); }
   }
@@ -625,22 +725,28 @@
   }
   function placeThumb(p){
     const {travel}=trackGeom();
-    const x=TRACK_INSET + (p/(N-1))*travel;
+    const x=TRACK_INSET + (p/(STOPS-1))*travel;
     thumb.style.left=x+'px';
   }
   function updateArrows(){
+    if(finalePhase==='cta' || finalePhase==='exit' || finalePhase==='reveal'){
+      prev.disabled=true;
+      next.disabled=true;
+      return;
+    }
     const i=Math.round(pos);
     prev.disabled = (!animating && i<=0 && pos<=0.0001);
-    next.disabled = (!animating && i>=N-1 && pos>=N-1-0.0001);
+    next.disabled = (!animating && i>=FINALE_IDX && pos>=FINALE_IDX-0.0001);
   }
 
   prev.addEventListener('click',()=>{ if(prev.disabled)return; animateTo(Math.round(animating?target:pos)-1); });
   next.addEventListener('click',()=>{ if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
 
   thumb.addEventListener('pointerdown',e=>{
+    if(finalePhase!=='explore') return;
     dragging=true; animating=false;
     clearTimeout(revealTimer);
-    placePartner(false, Math.round(pos));
+    placePartner(false, cityIdxFromPos(pos));
     thumb.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
@@ -648,9 +754,9 @@
     if(!dragging)return;
     const {left,travel,tw}=trackGeom();
     let x=e.clientX-left-tw/2;
-    let p=((x-TRACK_INSET)/travel)*(N-1);
-    pos=Math.max(0,Math.min(N-1,p));
-    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos)); updateArrows();
+    let p=((x-TRACK_INSET)/travel)*(STOPS-1);
+    pos=Math.max(0,Math.min(FINALE_IDX,p));
+    render(pos,false,false); placeThumb(pos); placeTip(false); placePartner(false, cityIdxFromPos(pos)); updateArrows();
   });
   function endDrag(e){
     if(!dragging)return; dragging=false;
@@ -661,10 +767,10 @@
   thumb.addEventListener('pointercancel',endDrag);
 
   track.addEventListener('pointerdown',e=>{
-    if(e.target===thumb)return;
+    if(finalePhase!=='explore' || e.target===thumb)return;
     const {left,travel,tw}=trackGeom();
-    let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(N-1);
-    animateTo(Math.round(Math.max(0,Math.min(N-1,p))));
+    let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(STOPS-1);
+    animateTo(Math.round(Math.max(0,Math.min(FINALE_IDX,p))));
   });
 
   window.addEventListener('keydown',e=>{
@@ -682,9 +788,9 @@
   window.addEventListener('resize',()=>{
     if(!appLaunched) return;
     placeThumb(pos);
-    if(settledNow()){
-      const idx=Math.round(pos);
-      placeTip(revealReady(), idx);
+    if(settledNow() && finalePhase==='explore'){
+      const idx=cityIdxFromPos(pos);
+      placeTip(shouldShowCityUi(), idx);
       updatePartnerPopup();
     }
   });
