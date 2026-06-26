@@ -46,7 +46,7 @@
     cursor:default;
   }
   .window{
-    position:relative; z-index:1;
+    position:relative; z-index:3;
     width:660px; max-width:96%;
     flex-shrink:0;
     transform-origin:center center;
@@ -231,7 +231,7 @@
     font-family:Manrope, Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     font-weight:500; font-size:clamp(21px, 5.7vw, 27px); line-height:1.28;
     color:var(--beam); text-align:center;
-    opacity:0; pointer-events:none; z-index:3;
+    opacity:0; pointer-events:none; z-index:4;
   }
   .intro-tagline.is-visible{
     animation:introSlideDown .75s ease forwards;
@@ -239,7 +239,7 @@
   .intro-logo{
     position:absolute; left:50%; bottom:9%;
     transform:translate(-50%, 120%);
-    opacity:0; pointer-events:none; z-index:3;
+    opacity:0; pointer-events:none; z-index:4;
   }
   .intro-logo.is-visible{
     animation:introSlideUp .75s ease forwards;
