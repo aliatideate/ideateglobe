@@ -205,14 +205,14 @@
   .canvas.is-autoplay *{cursor:none !important}
   .demo-cursor{
     position:fixed; left:0; top:0;
-    width:27px; height:36px;
+    width:48px; height:48px;
     pointer-events:none; z-index:10000;
     opacity:0;
     transition:left .9s cubic-bezier(.33,.01,.18,1),
                top .9s cubic-bezier(.33,.01,.18,1),
                opacity .2s steps(2);
   }
-  .demo-cursor.is-pointer{width:24px; height:30px}
+  .demo-cursor.is-pointer{width:44px; height:52px}
   .demo-cursor.is-visible{opacity:1}
   .demo-cursor img{
     display:block; width:100%; height:100%;
@@ -316,8 +316,8 @@
 </div>
 
 <div class="demo-cursor" id="demoCursor" hidden aria-hidden="true">
-  <img class="demo-cursor-default" src="assets/cursor-default.svg" alt="" width="27" height="36">
-  <img class="demo-cursor-pointer" src="assets/cursor-pointer.svg" alt="" width="24" height="30">
+  <img class="demo-cursor-default" src="assets/cursor-default.png?v=2" alt="" width="48" height="48">
+  <img class="demo-cursor-pointer" src="assets/cursor-pointer.png?v=2" alt="" width="44" height="52">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -881,7 +881,7 @@
   }
 
   function cursorHotspot(pointer){
-    return pointer ? {x:8, y:2} : {x:0, y:0};
+    return pointer ? {x:17, y:1} : {x:0, y:0};
   }
 
   function cursorMoveMs(){
@@ -934,9 +934,17 @@
 
     for(let stop=0; stop<=LAST_CITY_IDX; stop++){
       await waitForCityStop(stop);
-      const dwell=stop===START_IDX ? AUTO_FIRST_CITY_DELAY_MS : AUTO_CITY_DWELL_MS;
-      await sleep(dwell);
-      await demoClick(next, ()=> animateTo(Math.round(pos)+1));
+      if(stop===START_IDX){
+        await sleep(AUTO_FIRST_CITY_DELAY_MS);
+        await moveCursorTo(next);
+        const holdMs=Math.max(0, AUTO_CITY_DWELL_MS-AUTO_FIRST_CITY_DELAY_MS-cursorMoveMs());
+        await sleep(holdMs);
+        await sleep(reduce ? 0 : 100);
+        animateTo(Math.round(pos)+1);
+      } else {
+        await sleep(AUTO_CITY_DWELL_MS);
+        await demoClick(next, ()=> animateTo(Math.round(pos)+1));
+      }
       await waitUntil(()=> settledNow());
     }
 
