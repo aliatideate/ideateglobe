@@ -52,6 +52,7 @@
     position:relative; z-index:1;
     width:660px; max-width:96%;
     flex-shrink:0;
+    transform-origin:center center;
     background:var(--bg);
     border:5px solid var(--win-border);
     box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
@@ -172,20 +173,24 @@
     padding:7px 8px; line-height:1.25;
   }
   .folder-launch{
-    position:relative; z-index:2;
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%, -50%);
+    z-index:2;
     display:grid; place-items:center;
     padding:0; border:none; background:transparent;
     cursor:pointer;
     image-rendering:pixelated; image-rendering:crisp-edges;
-    transition:opacity .14s steps(3), transform .14s steps(3);
+    transition:opacity .18s steps(4), transform .18s steps(4);
   }
   .folder-launch img{display:block; width:min(42vw, 160px); height:auto}
-  .folder-launch.is-opening{opacity:0; transform:scale(1.08); pointer-events:none}
+  .folder-launch.is-opening{opacity:0; transform:translate(-50%, -50%) scale(1.12); pointer-events:none}
+  .folder-launch[hidden]{display:none}
   .window[hidden]{display:none}
-  .window.is-opening{animation:windowPop .2s steps(4) both}
+  .window.is-opening{animation:windowPop .36s steps(6) both}
   @keyframes windowPop{
-    from{opacity:0; transform:scale(.88)}
-    to{opacity:1; transform:scale(1)}
+    0%{opacity:0; transform:scale(.62)}
+    45%{opacity:1; transform:scale(.95)}
+    100%{opacity:1; transform:scale(1)}
   }
   @media (prefers-reduced-motion:reduce){
     .tip,.partner-popup,.folder-launch{transition:none}
@@ -570,12 +575,15 @@
   function openApp(){
     if(appLaunched) return;
     appLaunched = true;
-    const animMs = reduce ? 0 : 200;
+    const animMs = reduce ? 0 : 360;
     folderLaunch.classList.add('is-opening');
     appWindow.hidden = false;
     appWindow.setAttribute('aria-hidden', 'false');
     appWindow.classList.add('is-opening');
-    setTimeout(()=>{ folderLaunch.hidden = true; }, animMs);
+    setTimeout(()=>{
+      folderLaunch.hidden = true;
+      appWindow.classList.remove('is-opening');
+    }, animMs);
     settledSince = Date.now();
     lastSettledIdx = -1;
     frame();
