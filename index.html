@@ -376,6 +376,7 @@
   const REVEAL_DELAY_MS = 200;
   const FINALE_EXIT_MS = 350;
   const POPUP_INSET = 20;
+  const FOLDER_APPEAR_DELAY_MS = 2000;
   const AUTO_FOLDER_WAIT_MS = 2000;
   const AUTO_CITY_DWELL_MS = 4000;
   const AUTO_FIRST_CITY_DELAY_MS = 1000;
@@ -953,11 +954,12 @@
     await sleep(AUTO_CTA_HOLD_MS);
   }
 
-  function revealIntro(){
+  async function revealIntro(){
     const maxW = Math.min(window.innerWidth * 0.385, 146);
     const ratio = folderImg.naturalHeight / folderImg.naturalWidth;
     folderImg.style.width = maxW + 'px';
     folderImg.style.height = Math.round(maxW * ratio) + 'px';
+    await sleep(FOLDER_APPEAR_DELAY_MS);
     folderLaunch.hidden = false;
     if(reduce){
       folderLaunch.classList.add('is-visible');
