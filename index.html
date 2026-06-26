@@ -232,21 +232,17 @@
     font-weight:500; font-size:clamp(21px, 5.7vw, 27px); line-height:1.28;
     color:var(--beam); text-align:center;
     opacity:0; pointer-events:none; z-index:3;
-    transition:opacity .75s ease, transform .75s ease;
   }
   .intro-tagline.is-visible{
-    opacity:1;
-    transform:translate(-50%, 0);
+    animation:introSlideDown .75s ease forwards;
   }
   .intro-logo{
     position:absolute; left:50%; bottom:9%;
     transform:translate(-50%, 120%);
     opacity:0; pointer-events:none; z-index:3;
-    transition:opacity .5s ease, transform .5s ease;
   }
   .intro-logo.is-visible{
-    opacity:1;
-    transform:translate(-50%, 0);
+    animation:introSlideUp .75s ease forwards;
   }
   .intro-logo img{
     display:block; width:min(76vw, 300px); height:auto;
@@ -260,9 +256,8 @@
     cursor:pointer;
     image-rendering:pixelated; image-rendering:crisp-edges;
     opacity:0;
-    transition:opacity .5s ease;
   }
-  .folder-launch.is-visible{opacity:1}
+  .folder-launch.is-visible{animation:introFadeIn .5s ease forwards}
   .folder-launch img{display:block; width:min(38.5vw, 146px); height:auto}
   .folder-label{
     display:block;
@@ -288,8 +283,24 @@
     45%{opacity:1; transform:scale(.95)}
     100%{opacity:1; transform:scale(1)}
   }
+  @keyframes introSlideDown{
+    from{opacity:0; transform:translate(-50%, -120%)}
+    to{opacity:1; transform:translate(-50%, 0)}
+  }
+  @keyframes introSlideUp{
+    from{opacity:0; transform:translate(-50%, 120%)}
+    to{opacity:1; transform:translate(-50%, 0)}
+  }
+  @keyframes introFadeIn{
+    from{opacity:0}
+    to{opacity:1}
+  }
   @media (prefers-reduced-motion:reduce){
     .tip,.partner-popup,.folder-launch,.map-cta-wrap,.demo-cursor,.intro-tagline,.intro-logo{transition:none}
+    .intro-tagline.is-visible,.intro-logo.is-visible,.folder-launch.is-visible{animation:none; opacity:1}
+    .intro-tagline.is-visible{transform:translate(-50%, 0)}
+    .intro-logo.is-visible{transform:translate(-50%, 0)}
+    .folder-launch.is-visible{transform:translate(-50%, -50%)}
     .window.is-opening{animation:none}
     canvas#globe{transition:none}
   }
@@ -987,12 +998,7 @@
     await sleep(AUTO_CTA_HOLD_MS);
   }
 
-  async function revealIntro(){
-    const maxW = Math.min(window.innerWidth * 0.385, 146);
-    const ratio = folderImg.naturalHeight / folderImg.naturalWidth;
-    folderImg.style.width = maxW + 'px';
-    folderImg.style.height = Math.round(maxW * ratio) + 'px';
-    await sleep(FOLDER_APPEAR_DELAY_MS);
+  function revealIntroChrome(){
     folderLaunch.hidden = false;
     introTagline.hidden = false;
     introLogo.hidden = false;
@@ -1000,15 +1006,26 @@
       folderLaunch.classList.add('is-visible');
       introTagline.classList.add('is-visible');
       introLogo.classList.add('is-visible');
-      if(autoplay) runAutoplay();
       return;
     }
+    void introTagline.offsetHeight;
     requestAnimationFrame(()=>{
-      folderLaunch.classList.add('is-visible');
-      introTagline.classList.add('is-visible');
-      introLogo.classList.add('is-visible');
-      if(autoplay) runAutoplay();
+      requestAnimationFrame(()=>{
+        folderLaunch.classList.add('is-visible');
+        introTagline.classList.add('is-visible');
+        introLogo.classList.add('is-visible');
+      });
     });
+  }
+
+  async function revealIntro(){
+    const maxW = Math.min(window.innerWidth * 0.385, 146);
+    const ratio = folderImg.naturalHeight / folderImg.naturalWidth;
+    folderImg.style.width = maxW + 'px';
+    folderImg.style.height = Math.round(maxW * ratio) + 'px';
+    await sleep(FOLDER_APPEAR_DELAY_MS);
+    revealIntroChrome();
+    if(autoplay) runAutoplay();
   }
   revealIntro();
 })();
