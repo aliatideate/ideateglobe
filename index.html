@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Global Collaborators</title>
+<title>Ideate's Collaborators</title>
 <style>
   :root{
     /* Ideate palette */
@@ -78,23 +78,32 @@
     transition:transform .35s steps(5), opacity .35s steps(5);
   }
   .stage.is-exiting #globe{transform:scale(.35); opacity:0}
-  .map-cta{
+  .map-cta-wrap{
     position:absolute; left:50%; top:50%;
     transform:translate(-50%, -50%) scale(.92);
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    opacity:0; pointer-events:none;
+    transition:opacity .14s steps(3), transform .14s steps(3);
+    z-index:3;
+  }
+  .map-cta-wrap.show{
+    opacity:1; pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .map-cta{
     background:var(--icon); color:var(--dusk);
     border:2px solid var(--dusk);
     box-shadow:5px 5px 0 var(--bolt);
     font:700 18px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     padding:17px 26px; white-space:nowrap;
     cursor:pointer;
-    opacity:0; pointer-events:none;
-    transition:opacity .14s steps(3), transform .14s steps(3);
-    z-index:3;
   }
-  .map-cta.show{
-    opacity:1; pointer-events:auto;
-    transform:translate(-50%, -50%) scale(1);
+  .map-cta-url{
+    color:var(--dusk);
+    font:700 13px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    text-decoration:none;
   }
+  .map-cta-url:hover{text-decoration:underline}
   .scrollbar.is-disabled{opacity:.55; pointer-events:none}
   .tip{
     position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
@@ -192,7 +201,7 @@
     padding:7px 8px; line-height:1.25;
   }
   .folder-launch{
-    position:absolute; left:50%; top:54%;
+    position:absolute; left:50%; top:50%;
     transform:translate(-50%, -50%) scale(0.72);
     z-index:2;
     display:flex; flex-direction:column; align-items:center; gap:14px;
@@ -206,13 +215,13 @@
     opacity:1;
     transform:translate(-50%, -50%) scale(1);
   }
-  .folder-launch img{display:block; width:min(55vw, 208px); height:auto}
+  .folder-launch img{display:block; width:min(38.5vw, 146px); height:auto}
   .folder-label{
     display:block;
     color:var(--beam);
-    font:700 clamp(11px, 3.1vw, 14px)/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    font:700 clamp(10px, 2.2vw, 12px)/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     text-align:center; letter-spacing:.35px;
-    max-width:min(62vw, 236px);
+    max-width:min(43vw, 165px);
     text-shadow:
       1px 0 0 var(--dusk), -1px 0 0 var(--dusk),
       0 1px 0 var(--dusk), 0 -1px 0 var(--dusk),
@@ -223,28 +232,7 @@
     transform:translate(-50%, -50%) scale(1.08);
     pointer-events:none;
   }
-  .folder-launch[hidden], .canvas-headline[hidden]{display:none}
-  .canvas-headline{
-    position:absolute;
-    top:clamp(28px, 7vh, 56px);
-    left:50%;
-    z-index:2;
-    width:min(90%, 480px);
-    margin:0;
-    text-align:center;
-    color:var(--beam);
-    font:700 clamp(17px, 4.6vw, 24px)/1.3 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
-    letter-spacing:.2px;
-    opacity:0;
-    transform:translateX(-50%) scale(0.9);
-    transition:opacity .24s steps(4), transform .24s steps(4);
-    pointer-events:none;
-  }
-  .canvas-headline.show{
-    opacity:1;
-    transform:translateX(-50%) scale(1);
-  }
-  .canvas-headline span{display:block}
+  .folder-launch[hidden]{display:none}
   .window[hidden]{display:none}
   .window.is-opening{animation:windowPop .52s steps(8) both}
   @keyframes windowPop{
@@ -253,24 +241,20 @@
     100%{opacity:1; transform:scale(1)}
   }
   @media (prefers-reduced-motion:reduce){
-    .tip,.partner-popup,.folder-launch,.map-cta,.canvas-headline{transition:none}
+    .tip,.partner-popup,.folder-launch,.map-cta-wrap{transition:none}
     .window.is-opening{animation:none}
     canvas#globe{transition:none}
   }
 </style>
 
 <div class="canvas">
-  <h1 class="canvas-headline" id="canvasHeadline" hidden>
-    <span>Some of the world's best</span>
-    <span>design firms work with us.</span>
-  </h1>
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Ideate's Collaborators" hidden>
-    <img src="assets/collaborators-folder-icon.png" alt="" width="208" height="167" decoding="async">
+    <img src="assets/collaborators-folder-icon.png" alt="" width="146" height="117" decoding="async">
     <span class="folder-label">Ideate's Collaborators</span>
   </button>
-<div class="window" id="appWindow" role="application" aria-label="Global Collaborators globe explorer" hidden aria-hidden="true">
+<div class="window" id="appWindow" role="application" aria-label="Ideate's Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
-    <div class="title">Global&nbsp;Collaborators</div>
+    <div class="title">Ideate's&nbsp;Collaborators</div>
     <div class="winbtns">
       <div class="winbtn" title="Minimize"><b>_</b></div>
       <div class="winbtn" title="Maximize"><b>□</b></div>
@@ -290,7 +274,10 @@
         <ul class="partner-tags" id="partnerTags"></ul>
       </div>
     </div>
-    <button class="map-cta" id="mapCta" type="button" hidden>There's room for one more →</button>
+    <div class="map-cta-wrap" id="mapCtaWrap" hidden>
+      <button class="map-cta" id="mapCta" type="button">There's room for one more →</button>
+      <a class="map-cta-url" href="https://www.ideateinnovation.com" target="_blank" rel="noopener noreferrer">www.ideateinnovation.com</a>
+    </div>
   </div>
 
   <div class="scrollbar" id="scrollbar">
@@ -365,8 +352,8 @@
 
   const folderLaunch = document.getElementById('folderLaunch');
   const folderImg = folderLaunch.querySelector('img');
-  const canvasHeadline = document.getElementById('canvasHeadline');
   const appWindow = document.getElementById('appWindow');
+  const mapCtaWrap = document.getElementById('mapCtaWrap');
   const mapCta = document.getElementById('mapCta');
   const scrollbarEl = document.getElementById('scrollbar');
 
@@ -630,8 +617,8 @@
       finalePhase='cta';
       stageEl.classList.remove('is-exiting');
       main.style.visibility='hidden';
-      mapCta.hidden=false;
-      mapCta.classList.add('show');
+      mapCtaWrap.hidden=false;
+      mapCtaWrap.classList.add('show');
       disableScrollbar();
       updateArrows();
     }, exitMs);
@@ -840,19 +827,16 @@
   });
 
   function revealIntro(){
-    const maxW = Math.min(window.innerWidth * 0.55, 208);
+    const maxW = Math.min(window.innerWidth * 0.385, 146);
     const ratio = folderImg.naturalHeight / folderImg.naturalWidth;
     folderImg.style.width = maxW + 'px';
     folderImg.style.height = Math.round(maxW * ratio) + 'px';
-    canvasHeadline.hidden = false;
     folderLaunch.hidden = false;
     if(reduce){
-      canvasHeadline.classList.add('show');
       folderLaunch.classList.add('is-visible');
       return;
     }
     requestAnimationFrame(()=>{
-      canvasHeadline.classList.add('show');
       folderLaunch.classList.add('is-visible');
     });
   }
