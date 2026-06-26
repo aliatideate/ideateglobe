@@ -171,13 +171,33 @@
     font-size:12px; font-weight:700; text-align:center;
     padding:7px 8px; line-height:1.25;
   }
+  .folder-launch{
+    position:relative; z-index:2;
+    display:grid; place-items:center;
+    padding:0; border:none; background:transparent;
+    cursor:pointer;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    transition:opacity .14s steps(3), transform .14s steps(3);
+  }
+  .folder-launch img{display:block; width:min(42vw, 160px); height:auto}
+  .folder-launch.is-opening{opacity:0; transform:scale(1.08); pointer-events:none}
+  .window[hidden]{display:none}
+  .window.is-opening{animation:windowPop .2s steps(4) both}
+  @keyframes windowPop{
+    from{opacity:0; transform:scale(.88)}
+    to{opacity:1; transform:scale(1)}
+  }
   @media (prefers-reduced-motion:reduce){
-    .tip,.partner-popup{transition:none}
+    .tip,.partner-popup,.folder-launch{transition:none}
+    .window.is-opening{animation:none}
   }
 </style>
 
 <div class="canvas">
-<div class="window" role="application" aria-label="Global Design Partners globe explorer">
+  <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Collaborators">
+    <img src="assets/collaborators-folder.png" alt="" width="160" height="190" decoding="async">
+  </button>
+<div class="window" id="appWindow" role="application" aria-label="Global Design Partners globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
     <div class="title">Global&nbsp;Design&nbsp;Partners</div>
     <div class="winbtns">
@@ -264,6 +284,10 @@
   const DUBAI_IDX = 0;
   const REVEAL_DELAY_MS = 2000;
   const POPUP_INSET = 20;
+  let appLaunched = false;
+
+  const folderLaunch = document.getElementById('folderLaunch');
+  const appWindow = document.getElementById('appWindow');
 
   function partnerLogoSrc(partner){
     const file=partner.logoFile || (partner.firm + '.png');
@@ -531,6 +555,7 @@
   function settledNow(){ return !dragging && !animating && Math.abs(pos-Math.round(pos))<1e-6; }
 
   function frame(){
+    if(!appLaunched) return;
     const s=settledNow();
     trackSettlement();
     const idx=Math.round(pos);
@@ -542,7 +567,22 @@
     updateArrows();
   }
 
+  function openApp(){
+    if(appLaunched) return;
+    appLaunched = true;
+    const animMs = reduce ? 0 : 200;
+    folderLaunch.classList.add('is-opening');
+    appWindow.hidden = false;
+    appWindow.setAttribute('aria-hidden', 'false');
+    appWindow.classList.add('is-opening');
+    setTimeout(()=>{ folderLaunch.hidden = true; }, animMs);
+    settledSince = Date.now();
+    lastSettledIdx = -1;
+    frame();
+  }
+
   function animateTo(idx){
+    if(!appLaunched) return;
     idx=Math.max(0,Math.min(N-1,idx));
     clearTimeout(revealTimer);
     if(reduce){ pos=target=idx; animating=false; frame(); return; }
@@ -615,11 +655,19 @@
   });
 
   window.addEventListener('keydown',e=>{
+    if(!appLaunched){
+      if(e.target===folderLaunch && (e.key==='Enter' || e.key===' ')){
+        e.preventDefault();
+        openApp();
+      }
+      return;
+    }
     if(e.key==='ArrowRight'){ if(!next.disabled)next.click(); }
     if(e.key==='ArrowLeft'){ if(!prev.disabled)prev.click(); }
   });
 
   window.addEventListener('resize',()=>{
+    if(!appLaunched) return;
     placeThumb(pos);
     if(settledNow()){
       const idx=Math.round(pos);
@@ -628,6 +676,9 @@
     }
   });
 
-  frame();
+  folderLaunch.addEventListener('click', openApp);
+  folderLaunch.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openApp(); }
+  });
 })();
 </script>
