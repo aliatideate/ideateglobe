@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Global Design Partners</title>
+<title>Global Collaborators</title>
 <style>
   :root{
     /* Ideate palette */
@@ -20,6 +20,8 @@
     --btn-face:#ebe6f7;
     --ocean:var(--bolt);
     --shadow-dot:#c9c3e8;
+    --cursor-default:url('assets/cursor-default.png') 2 2, auto;
+    --cursor-pointer:url('assets/cursor-pointer.png') 8 3, pointer;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -29,6 +31,7 @@
     font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     -webkit-font-smoothing:none;
     padding:0;
+    cursor:var(--cursor-default);
   }
   .canvas{
     position:relative;
@@ -38,6 +41,7 @@
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
     background:linear-gradient(180deg, var(--mist) 0%, var(--dusk) 100%);
+    cursor:var(--cursor-default);
   }
   .canvas::before{
     content:"";
@@ -59,6 +63,7 @@
     image-rendering:pixelated; image-rendering:crisp-edges;
     display:flex; flex-direction:column;
     user-select:none;
+    cursor:var(--cursor-default);
   }
   .titlebar{
     background:var(--bar); color:var(--bar-text);
@@ -72,7 +77,7 @@
   .winbtn{
     width:22px;height:22px; border:2px solid var(--bar-text);
     display:grid; place-items:center; font-size:12px; line-height:1;
-    color:var(--bar-text); cursor:default; background:transparent;
+    color:var(--bar-text); cursor:var(--cursor-default); background:transparent;
   }
   .winbtn b{transform:translateY(-1px)}
   .stage{position:relative; padding:0; background:var(--bg)}
@@ -102,13 +107,13 @@
   }
   .arrow{
     width:46px; flex:0 0 46px; background:var(--btn-face);
-    border:none; cursor:pointer; display:grid; place-items:center;
+    border:none; cursor:var(--cursor-pointer); display:grid; place-items:center;
     position:relative;
   }
   .arrow.left{border-right:3px solid var(--win-border)}
   .arrow.right{border-left:3px solid var(--win-border)}
   .arrow:active{background:var(--glow)}
-  .arrow:disabled{cursor:default; opacity:.45}
+  .arrow:disabled{cursor:var(--cursor-default); opacity:.45}
   .arrow svg{width:18px;height:18px}
   .arrow .gly{fill:var(--dusk)}
   .track{position:relative; flex:1 1 auto; background:#ddd8f2;
@@ -117,9 +122,9 @@
     position:absolute; top:6px; bottom:6px; width:56px;
     background:var(--dusk); border:2px solid var(--win-border);
     box-shadow:inset 0 2px 0 rgba(168,161,229,.45);
-    cursor:grab; touch-action:none;
+    cursor:var(--cursor-pointer); touch-action:none;
   }
-  .thumb:active{cursor:grabbing}
+  .thumb:active{cursor:var(--cursor-pointer)}
   .partner-popup{
     position:absolute; left:20px; bottom:20px; width:230px;
     background:var(--partner-surface,#faf8ff);
@@ -141,7 +146,7 @@
     width:15px; height:15px; padding:0;
     background:var(--glow); border:2px solid var(--win-border);
     color:var(--dusk); font-size:9px; line-height:1;
-    cursor:pointer; display:grid; place-items:center;
+    cursor:var(--cursor-pointer); display:grid; place-items:center;
     font-family:inherit; font-weight:700;
   }
   .partner-close:active{background:#ff8faa}
@@ -178,7 +183,7 @@
     z-index:2;
     display:grid; place-items:center;
     padding:0; border:none; background:transparent;
-    cursor:pointer;
+    cursor:var(--cursor-pointer);
     image-rendering:pixelated; image-rendering:crisp-edges;
     transition:opacity .18s steps(4), transform .18s steps(4);
   }
@@ -186,7 +191,7 @@
   .folder-launch.is-opening{opacity:0; transform:translate(-50%, -50%) scale(1.12); pointer-events:none}
   .folder-launch[hidden]{display:none}
   .window[hidden]{display:none}
-  .window.is-opening{animation:windowPop .36s steps(6) both}
+  .window.is-opening{animation:windowPop .52s steps(8) both}
   @keyframes windowPop{
     0%{opacity:0; transform:scale(.62)}
     45%{opacity:1; transform:scale(.95)}
@@ -202,9 +207,9 @@
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Collaborators">
     <img src="assets/collaborators-folder.png" alt="" width="208" height="247" decoding="async">
   </button>
-<div class="window" id="appWindow" role="application" aria-label="Global Design Partners globe explorer" hidden aria-hidden="true">
+<div class="window" id="appWindow" role="application" aria-label="Global Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
-    <div class="title">Global&nbsp;Design&nbsp;Partners</div>
+    <div class="title">Global&nbsp;Collaborators</div>
     <div class="winbtns">
       <div class="winbtn" title="Minimize"><b>_</b></div>
       <div class="winbtn" title="Maximize"><b>□</b></div>
@@ -575,7 +580,7 @@
   function openApp(){
     if(appLaunched) return;
     appLaunched = true;
-    const animMs = reduce ? 0 : 360;
+    const animMs = reduce ? 0 : 520;
     folderLaunch.classList.add('is-opening');
     appWindow.hidden = false;
     appWindow.setAttribute('aria-hidden', 'false');
