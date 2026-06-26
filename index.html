@@ -20,8 +20,8 @@
     --btn-face:#ebe6f7;
     --ocean:var(--bolt);
     --shadow-dot:#c9c3e8;
-    --cursor-default:url('assets/cursor-default.png') 0 0, auto;
-    --cursor-pointer:url('assets/cursor-pointer.png') 9 0, pointer;
+    --cursor-default:url('assets/cursor-default.svg') 0 0, url('assets/cursor-default.png') 0 0, auto;
+    --cursor-pointer:url('assets/cursor-pointer.svg') 5 1, url('assets/cursor-pointer.png') 5 1, pointer;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -322,7 +322,6 @@
   const FINALE_IDX = STOPS - 1;
   const START_IDX = 0;
   const REVEAL_DELAY_MS = 200;
-  const FINALE_REVEAL_MS = 400;
   const FINALE_EXIT_MS = 350;
   const POPUP_INSET = 20;
   let appLaunched = false;
@@ -550,16 +549,15 @@
   function shouldShowCityUi(){
     if(finalePhase !== 'explore') return false;
     const stop=Math.round(pos);
-    if(stop===LAST_CITY_IDX) return false;
+    if(stop>=FINALE_IDX) return false;
     return settledNow() && revealReady();
   }
 
   function shouldShowMarker(){
     if(finalePhase==='exit' || finalePhase==='cta') return false;
     if(!settledNow()) return false;
-    const stop=Math.round(pos);
-    if(stop===LAST_CITY_IDX || stop===FINALE_IDX) return true;
-    return shouldShowCityUi();
+    if(Math.round(pos)>=FINALE_IDX) return false;
+    return revealReady();
   }
 
   function disableScrollbar(){
@@ -571,31 +569,21 @@
   let finaleTimer=null;
   function startFinale(){
     if(finalePhase !== 'explore') return;
-    finalePhase='reveal';
-    partnerDismissed=false;
-    const dubai=LAST_CITY_IDX;
-    placeTip(true, dubai);
-    placePartner(true, dubai);
-    render(pos, true, true);
+    finalePhase='exit';
+    placeTip(false, LAST_CITY_IDX);
+    placePartner(false, LAST_CITY_IDX);
+    stageEl.classList.add('is-exiting');
     clearTimeout(finaleTimer);
-    const revealMs=reduce ? 0 : FINALE_REVEAL_MS;
+    const exitMs=reduce ? 0 : FINALE_EXIT_MS;
     finaleTimer=setTimeout(()=>{
-      if(finalePhase !== 'reveal') return;
-      finalePhase='exit';
-      placeTip(false, dubai);
-      placePartner(false, dubai);
-      stageEl.classList.add('is-exiting');
-      const exitMs=reduce ? 0 : FINALE_EXIT_MS;
-      finaleTimer=setTimeout(()=>{
-        finalePhase='cta';
-        stageEl.classList.remove('is-exiting');
-        main.style.visibility='hidden';
-        mapCta.hidden=false;
-        mapCta.classList.add('show');
-        disableScrollbar();
-        updateArrows();
-      }, exitMs);
-    }, revealMs);
+      finalePhase='cta';
+      stageEl.classList.remove('is-exiting');
+      main.style.visibility='hidden';
+      mapCta.hidden=false;
+      mapCta.classList.add('show');
+      disableScrollbar();
+      updateArrows();
+    }, exitMs);
   }
 
   function scheduleReveal(){
@@ -664,7 +652,7 @@
     if(finalePhase==='cta') return;
     const s=settledNow();
     trackSettlement();
-    if(finalePhase==='reveal' || finalePhase==='exit') return;
+    if(finalePhase==='exit') return;
     const cityIdx=cityIdxFromPos(pos);
     const showUi=shouldShowCityUi();
     const showMarker=shouldShowMarker();
@@ -693,7 +681,7 @@
   }
 
   function animateTo(idx){
-    if(!appLaunched || finalePhase==='cta' || finalePhase==='exit' || finalePhase==='reveal') return;
+    if(!appLaunched || finalePhase==='cta' || finalePhase==='exit') return;
     idx=Math.max(0,Math.min(FINALE_IDX,idx));
     clearTimeout(revealTimer);
     if(reduce){ pos=target=idx; animating=false; frame(); return; }
@@ -729,7 +717,7 @@
     thumb.style.left=x+'px';
   }
   function updateArrows(){
-    if(finalePhase==='cta' || finalePhase==='exit' || finalePhase==='reveal'){
+    if(finalePhase==='cta' || finalePhase==='exit'){
       prev.disabled=true;
       next.disabled=true;
       return;
