@@ -182,7 +182,7 @@
     image-rendering:pixelated; image-rendering:crisp-edges;
     transition:opacity .18s steps(4), transform .18s steps(4);
   }
-  .folder-launch img{display:block; width:min(42vw, 160px); height:auto}
+  .folder-launch img{display:block; width:min(55vw, 208px); height:auto}
   .folder-launch.is-opening{opacity:0; transform:translate(-50%, -50%) scale(1.12); pointer-events:none}
   .folder-launch[hidden]{display:none}
   .window[hidden]{display:none}
@@ -200,7 +200,7 @@
 
 <div class="canvas">
   <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Collaborators">
-    <img src="assets/collaborators-folder.png" alt="" width="160" height="190" decoding="async">
+    <img src="assets/collaborators-folder.png" alt="" width="208" height="247" decoding="async">
   </button>
 <div class="window" id="appWindow" role="application" aria-label="Global Design Partners globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
@@ -214,7 +214,7 @@
 
   <div class="stage">
     <canvas id="globe" width="660" height="600"></canvas>
-    <div class="tip" id="tip"><span id="tipCity">Dubai</span><span class="sub" id="tipCountry">United Arab Emirates</span></div>
+    <div class="tip" id="tip"><span id="tipCity">New York City</span><span class="sub" id="tipCountry">United States</span></div>
     <div class="partner-popup" id="partnerPopup" hidden>
       <div class="partner-titlebar">
         <button type="button" class="partner-close" id="partnerClose" aria-label="Close">✕</button>
@@ -248,21 +248,11 @@
 
   const CITIES = [
     {
-      name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
+      name:'New York City', country:'United States', lon:-74.00, lat:40.71,
       partner:{
-        firm:'sweetwater.',
-        logoFile:'sweetwater.png',
-        logoAlt:'Sweetwater logo',
-        tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
-        tagBg:'#FFCB3A', accent:'#3633F8'
-      }
-    },
-    {
-      name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
-      partner:{
-        firm:'Bopinc',
-        logoAlt:'Bopinc logo',
-        tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
+        firm:'IDEO',
+        logoAlt:'IDEO logo',
+        tags:['Illustration','UX Design','User Research','Presentation Design'],
         tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
@@ -276,18 +266,28 @@
       }
     },
     {
-      name:'New York City', country:'United States', lon:-74.00, lat:40.71,
+      name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
       partner:{
-        firm:'IDEO',
-        logoAlt:'IDEO logo',
-        tags:['Illustration','UX Design','User Research','Presentation Design'],
+        firm:'Bopinc',
+        logoAlt:'Bopinc logo',
+        tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
+        tagBg:'#FFCB3A', accent:'#3633F8'
+      }
+    },
+    {
+      name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
+      partner:{
+        firm:'sweetwater.',
+        logoFile:'sweetwater.png',
+        logoAlt:'Sweetwater logo',
+        tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
         tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
   ];
   const N = CITIES.length;
-  const DUBAI_IDX = 0;
-  const REVEAL_DELAY_MS = 2000;
+  const START_IDX = 0;
+  const REVEAL_DELAY_MS = 200;
   const POPUP_INSET = 20;
   let appLaunched = false;
 
@@ -446,7 +446,7 @@
   const partnerClose=document.getElementById('partnerClose');
   let partnerDismissed=false, lastPartnerIdx=0, renderedPartnerIdx=-1;
   let settledSince=0, lastSettledIdx=-1, revealTimer=null;
-  let dubaiRevealPending=true;
+  let initialRevealPending=true;
 
   function showFirmFallback(partner){
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
@@ -491,7 +491,7 @@
 
   function revealDelayMs(idx){
     if(reduce) return 0;
-    if(idx===DUBAI_IDX && dubaiRevealPending) return REVEAL_DELAY_MS;
+    if(idx===START_IDX && initialRevealPending) return REVEAL_DELAY_MS;
     return 0;
   }
 
@@ -509,13 +509,13 @@
     const idx=Math.round(pos);
     const delay=revealDelayMs(idx);
     if(delay===0){
-      if(idx===DUBAI_IDX) dubaiRevealPending=false;
+      if(idx===START_IDX) initialRevealPending=false;
       frame();
       return;
     }
     const remaining=Math.max(0, delay-(Date.now()-settledSince));
     revealTimer=setTimeout(()=>{
-      if(Math.round(pos)===DUBAI_IDX) dubaiRevealPending=false;
+      if(Math.round(pos)===START_IDX) initialRevealPending=false;
       frame();
     }, remaining);
   }
