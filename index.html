@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Global Design Partners</title>
+<title>Ideate's Collaborators</title>
 <style>
   :root{
     /* Ideate palette */
@@ -29,6 +29,7 @@
     font-family:Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
     -webkit-font-smoothing:none;
     padding:0;
+    cursor:default;
   }
   .canvas{
     position:relative;
@@ -37,27 +38,22 @@
     max-height:100vh;
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
-    background:linear-gradient(180deg, var(--mist) 0%, var(--dusk) 100%);
-  }
-  .canvas::before{
-    content:"";
-    position:absolute; inset:0;
-    pointer-events:none;
-    background-image:radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px);
-    background-size:5px 5px;
-    mix-blend-mode:overlay;
-    image-rendering:pixelated;
+    background:var(--dusk) center/cover no-repeat;
+    background-image:url('assets/bg.png');
+    cursor:default;
   }
   .window{
     position:relative; z-index:1;
     width:660px; max-width:96%;
     flex-shrink:0;
+    transform-origin:center center;
     background:var(--bg);
     border:5px solid var(--win-border);
     box-shadow:0 0 0 1px #000, 6px 8px 0 rgba(0,0,0,.28);
     image-rendering:pixelated; image-rendering:crisp-edges;
     display:flex; flex-direction:column;
     user-select:none;
+    cursor:default;
   }
   .titlebar{
     background:var(--bar); color:var(--bar-text);
@@ -75,7 +71,40 @@
   }
   .winbtn b{transform:translateY(-1px)}
   .stage{position:relative; padding:0; background:var(--bg)}
-  canvas#globe{display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; background:var(--bg)}
+  canvas#globe{
+    display:block; width:100%; height:auto;
+    image-rendering:pixelated; image-rendering:crisp-edges; background:var(--bg);
+    transform-origin:center center;
+    transition:transform .35s steps(5), opacity .35s steps(5);
+  }
+  .stage.is-exiting #globe{transform:scale(.35); opacity:0}
+  .map-cta-wrap{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%, -50%) scale(.92);
+    display:flex; flex-direction:column; align-items:center; gap:18px;
+    opacity:0; pointer-events:none;
+    transition:opacity .14s steps(3), transform .14s steps(3);
+    z-index:3;
+  }
+  .map-cta-wrap.show{
+    opacity:1; pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .map-cta{
+    background:var(--icon); color:var(--dusk);
+    border:2px solid var(--dusk);
+    box-shadow:5px 5px 0 var(--bolt);
+    font:700 18px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    padding:17px 26px; white-space:nowrap;
+    cursor:pointer;
+  }
+  .map-cta-url{
+    color:var(--dusk);
+    font:700 16px/1.2 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    text-decoration:none;
+  }
+  .map-cta-url:hover{text-decoration:underline}
+  .scrollbar.is-disabled{opacity:.55; pointer-events:none}
   .tip{
     position:absolute; left:0; top:0; transform:translate(-50%,-100%) scale(.6);
     transform-origin:50% 120%;
@@ -116,9 +145,9 @@
     position:absolute; top:6px; bottom:6px; width:56px;
     background:var(--dusk); border:2px solid var(--win-border);
     box-shadow:inset 0 2px 0 rgba(168,161,229,.45);
-    cursor:grab; touch-action:none;
+    cursor:pointer; touch-action:none;
   }
-  .thumb:active{cursor:grabbing}
+  .thumb:active{cursor:pointer}
   .partner-popup{
     position:absolute; left:20px; bottom:20px; width:230px;
     background:var(--partner-surface,#faf8ff);
@@ -171,15 +200,61 @@
     font-size:12px; font-weight:700; text-align:center;
     padding:7px 8px; line-height:1.25;
   }
+  .folder-launch{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%, -50%) scale(0.72);
+    z-index:2;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    padding:0; border:none; background:transparent;
+    cursor:pointer;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    opacity:0;
+    transition:opacity .22s steps(4), transform .22s steps(4);
+  }
+  .folder-launch.is-visible{
+    opacity:1;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .folder-launch img{display:block; width:min(38.5vw, 146px); height:auto}
+  .folder-label{
+    display:block;
+    color:var(--beam);
+    font:700 clamp(13px, 3.4vw, 17px)/1.15 Tahoma, Geneva, "DejaVu Sans", Verdana, sans-serif;
+    text-align:center; letter-spacing:.35px;
+    max-width:min(43vw, 165px);
+    text-shadow:
+      1px 0 0 var(--dusk), -1px 0 0 var(--dusk),
+      0 1px 0 var(--dusk), 0 -1px 0 var(--dusk),
+      2px 2px 0 var(--bolt);
+  }
+  .folder-launch.is-opening{
+    opacity:0;
+    transform:translate(-50%, -50%) scale(1.08);
+    pointer-events:none;
+  }
+  .folder-launch[hidden]{display:none}
+  .window[hidden]{display:none}
+  .window.is-opening{animation:windowPop .52s steps(8) both}
+  @keyframes windowPop{
+    0%{opacity:0; transform:scale(.62)}
+    45%{opacity:1; transform:scale(.95)}
+    100%{opacity:1; transform:scale(1)}
+  }
   @media (prefers-reduced-motion:reduce){
-    .tip,.partner-popup{transition:none}
+    .tip,.partner-popup,.folder-launch,.map-cta-wrap{transition:none}
+    .window.is-opening{animation:none}
+    canvas#globe{transition:none}
   }
 </style>
 
 <div class="canvas">
-<div class="window" role="application" aria-label="Global Design Partners globe explorer">
+  <button class="folder-launch" id="folderLaunch" type="button" aria-label="Open Ideate's Collaborators" hidden>
+    <img src="assets/collaborators-folder-icon.png" alt="" width="146" height="117" decoding="async">
+    <span class="folder-label">Ideate's<br>Collaborators</span>
+  </button>
+<div class="window" id="appWindow" role="application" aria-label="Ideate's Collaborators globe explorer" hidden aria-hidden="true">
   <div class="titlebar">
-    <div class="title">Global&nbsp;Design&nbsp;Partners</div>
+    <div class="title">Ideate's&nbsp;Collaborators</div>
     <div class="winbtns">
       <div class="winbtn" title="Minimize"><b>_</b></div>
       <div class="winbtn" title="Maximize"><b>□</b></div>
@@ -189,7 +264,7 @@
 
   <div class="stage">
     <canvas id="globe" width="660" height="600"></canvas>
-    <div class="tip" id="tip"><span id="tipCity">Dubai</span><span class="sub" id="tipCountry">United Arab Emirates</span></div>
+    <div class="tip" id="tip"><span id="tipCity">New York City</span><span class="sub" id="tipCountry">United States</span></div>
     <div class="partner-popup" id="partnerPopup" hidden>
       <div class="partner-titlebar">
         <button type="button" class="partner-close" id="partnerClose" aria-label="Close">✕</button>
@@ -199,9 +274,13 @@
         <ul class="partner-tags" id="partnerTags"></ul>
       </div>
     </div>
+    <div class="map-cta-wrap" id="mapCtaWrap" hidden>
+      <button class="map-cta" id="mapCta" type="button">There's room for one more →</button>
+      <a class="map-cta-url" href="https://www.ideateinnovation.com" target="_blank" rel="noopener noreferrer">www.ideateinnovation.com</a>
+    </div>
   </div>
 
-  <div class="scrollbar">
+  <div class="scrollbar" id="scrollbar">
     <button class="arrow left" id="prev" aria-label="Previous location">
       <svg viewBox="0 0 18 18"><polygon class="gly" points="12,2 12,16 4,9"/></svg>
     </button>
@@ -223,21 +302,11 @@
 
   const CITIES = [
     {
-      name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
+      name:'New York City', country:'United States', lon:-74.00, lat:40.71,
       partner:{
-        firm:'sweetwater.',
-        logoFile:'sweetwater.png',
-        logoAlt:'Sweetwater logo',
-        tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
-        tagBg:'#FFCB3A', accent:'#3633F8'
-      }
-    },
-    {
-      name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
-      partner:{
-        firm:'Bopinc',
-        logoAlt:'Bopinc logo',
-        tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
+        firm:'IDEO',
+        logoAlt:'IDEO logo',
+        tags:['Illustration','UX Design','User Research','Presentation Design'],
         tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
@@ -251,19 +320,42 @@
       }
     },
     {
-      name:'New York City', country:'United States', lon:-74.00, lat:40.71,
+      name:'Amsterdam', country:'Netherlands', lon:4.90, lat:52.37,
       partner:{
-        firm:'IDEO',
-        logoAlt:'IDEO logo',
-        tags:['Illustration','UX Design','User Research','Presentation Design'],
+        firm:'Bopinc',
+        logoAlt:'Bopinc logo',
+        tags:['Market Research','Brand Design','Stakeholder Workshops','Prototyping & Testing'],
+        tagBg:'#FFCB3A', accent:'#3633F8'
+      }
+    },
+    {
+      name:'Dubai', country:'United Arab Emirates', lon:55.27, lat:25.20,
+      partner:{
+        firm:'sweetwater.',
+        logoFile:'sweetwater.png',
+        logoAlt:'Sweetwater logo',
+        tags:['Market Research','GTM Strategy','Persona Workshops','Prototyping & Testing'],
         tagBg:'#FFCB3A', accent:'#3633F8'
       }
     },
   ];
   const N = CITIES.length;
-  const DUBAI_IDX = 0;
-  const REVEAL_DELAY_MS = 2000;
+  const STOPS = N + 1;
+  const LAST_CITY_IDX = N - 1;
+  const FINALE_IDX = STOPS - 1;
+  const START_IDX = 0;
+  const REVEAL_DELAY_MS = 200;
+  const FINALE_EXIT_MS = 350;
   const POPUP_INSET = 20;
+  let appLaunched = false;
+  let finalePhase = 'explore';
+
+  const folderLaunch = document.getElementById('folderLaunch');
+  const folderImg = folderLaunch.querySelector('img');
+  const appWindow = document.getElementById('appWindow');
+  const mapCtaWrap = document.getElementById('mapCtaWrap');
+  const mapCta = document.getElementById('mapCta');
+  const scrollbarEl = document.getElementById('scrollbar');
 
   function partnerLogoSrc(partner){
     const file=partner.logoFile || (partner.firm + '.png');
@@ -283,10 +375,23 @@
     })));
   }
 
+  function waitForImage(img){
+    return new Promise(resolve=>{
+      if(img.complete && img.naturalWidth>0) resolve();
+      else{
+        img.addEventListener('load', resolve, {once:true});
+        img.addEventListener('error', resolve, {once:true});
+      }
+    });
+  }
+
+  const folderImgReady = waitForImage(folderImg);
+
   const topo = await (async()=>{
     const [data]=await Promise.all([
       fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r=>r.json()),
       preloadPartnerLogos(),
+      folderImgReady,
     ]);
     return data;
   })();
@@ -322,10 +427,15 @@
   const oceanPattern = bctx.createPattern(pat,'repeat');
 
   function rotForPos(p){
-    const i = Math.max(0, Math.min(N-2, Math.floor(p)));
-    const f = Math.max(0, Math.min(1, p - i));
+    const cityPos = Math.min(p, N - 1);
+    const i = Math.max(0, Math.min(N-2, Math.floor(cityPos)));
+    const f = Math.max(0, Math.min(1, cityPos - i));
     const a = CITIES[i], b = CITIES[i+1];
     return [ -(a.lon+(b.lon-a.lon)*f), -(a.lat+(b.lat-a.lat)*f), 0 ];
+  }
+
+  function cityIdxFromPos(p){
+    return Math.min(Math.round(p), N - 1);
   }
 
   function drawBuffer(rot){
@@ -386,13 +496,13 @@
     mctx.globalAlpha=1;
   }
 
-  function render(pos, settled){
+  function render(pos, settled, showMarker){
     drawBuffer(rotForPos(pos));
     mctx.clearRect(0,0,W,H);
     drawShadow();
     mctx.imageSmoothingEnabled=false;
     mctx.drawImage(buf, 0,0,R,R, GX,GY,GLOBE,GLOBE);
-    if(settled && revealReady()) drawMarker();
+    if(settled && showMarker) drawMarker();
   }
 
   const tip=document.getElementById('tip');
@@ -417,7 +527,7 @@
   const partnerClose=document.getElementById('partnerClose');
   let partnerDismissed=false, lastPartnerIdx=0, renderedPartnerIdx=-1;
   let settledSince=0, lastSettledIdx=-1, revealTimer=null;
-  let dubaiRevealPending=true;
+  let initialRevealPending=true;
 
   function showFirmFallback(partner){
     partnerLogo.innerHTML = '<span class="firm-fallback">' + partner.firm + '</span>';
@@ -462,42 +572,86 @@
 
   function revealDelayMs(idx){
     if(reduce) return 0;
-    if(idx===DUBAI_IDX && dubaiRevealPending) return REVEAL_DELAY_MS;
+    if(idx===START_IDX && initialRevealPending) return REVEAL_DELAY_MS;
     return 0;
   }
 
   function revealReady(){
     if(!settledNow()) return false;
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     const delay=revealDelayMs(idx);
     if(delay===0) return true;
     return Date.now()-settledSince>=delay;
   }
 
+  function shouldShowCityUi(){
+    if(finalePhase !== 'explore') return false;
+    const stop=Math.round(pos);
+    if(stop>=FINALE_IDX) return false;
+    return settledNow() && revealReady();
+  }
+
+  function shouldShowMarker(){
+    if(finalePhase==='exit' || finalePhase==='cta') return false;
+    if(!settledNow()) return false;
+    if(Math.round(pos)>=FINALE_IDX) return false;
+    return revealReady();
+  }
+
+  function disableScrollbar(){
+    scrollbarEl.classList.add('is-disabled');
+    prev.disabled=true;
+    next.disabled=true;
+  }
+
+  let finaleTimer=null;
+  function startFinale(){
+    if(finalePhase !== 'explore') return;
+    finalePhase='exit';
+    placeTip(false, LAST_CITY_IDX);
+    placePartner(false, LAST_CITY_IDX);
+    stageEl.classList.add('is-exiting');
+    clearTimeout(finaleTimer);
+    const exitMs=reduce ? 0 : FINALE_EXIT_MS;
+    finaleTimer=setTimeout(()=>{
+      finalePhase='cta';
+      stageEl.classList.remove('is-exiting');
+      main.style.visibility='hidden';
+      mapCtaWrap.hidden=false;
+      mapCtaWrap.classList.add('show');
+      disableScrollbar();
+      updateArrows();
+    }, exitMs);
+  }
+
   function scheduleReveal(){
     clearTimeout(revealTimer);
     if(!settledNow()) return;
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     const delay=revealDelayMs(idx);
     if(delay===0){
-      if(idx===DUBAI_IDX) dubaiRevealPending=false;
+      if(idx===START_IDX) initialRevealPending=false;
       frame();
       return;
     }
     const remaining=Math.max(0, delay-(Date.now()-settledSince));
     revealTimer=setTimeout(()=>{
-      if(Math.round(pos)===DUBAI_IDX) dubaiRevealPending=false;
+      if(cityIdxFromPos(pos)===START_IDX) initialRevealPending=false;
       frame();
     }, remaining);
   }
 
   function trackSettlement(){
     if(settledNow()){
-      const idx=Math.round(pos);
-      if(idx!==lastSettledIdx){
+      const stop=Math.round(pos);
+      if(stop!==lastSettledIdx){
         settledSince=Date.now();
-        lastSettledIdx=idx;
-        scheduleReveal();
+        lastSettledIdx=stop;
+        if(stop===FINALE_IDX && finalePhase==='explore'){
+          startFinale();
+        } else {
+          scheduleReveal();
+        }
       }
     } else if(lastSettledIdx!==-1){
       lastSettledIdx=-1;
@@ -506,22 +660,23 @@
   }
 
   function updatePartnerPopup(){
-    const idx=Math.round(pos);
+    const idx=cityIdxFromPos(pos);
     if(idx!==lastPartnerIdx){
       partnerDismissed=false;
       lastPartnerIdx=idx;
       renderedPartnerIdx=-1;
     }
-    if(settledNow() && revealReady() && !partnerDismissed){
+    if(shouldShowCityUi() && !partnerDismissed){
       placePartner(true, idx);
-    } else {
+    } else if(finalePhase==='explore'){
       placePartner(false, idx);
     }
   }
 
   partnerClose.addEventListener('click',()=>{
+    if(finalePhase !== 'explore') return;
     partnerDismissed=true;
-    placePartner(false, Math.round(pos));
+    placePartner(false, cityIdxFromPos(pos));
   });
 
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -531,19 +686,41 @@
   function settledNow(){ return !dragging && !animating && Math.abs(pos-Math.round(pos))<1e-6; }
 
   function frame(){
+    if(!appLaunched) return;
+    if(finalePhase==='cta') return;
     const s=settledNow();
     trackSettlement();
-    const idx=Math.round(pos);
-    const showUi=s && revealReady();
-    render(pos, s);
-    placeTip(showUi, idx);
+    if(finalePhase==='exit') return;
+    const cityIdx=cityIdxFromPos(pos);
+    const showUi=shouldShowCityUi();
+    const showMarker=shouldShowMarker();
+    render(pos, s, showMarker);
+    placeTip(showUi, cityIdx);
     updatePartnerPopup();
     placeThumb(pos);
     updateArrows();
   }
 
+  function openApp(){
+    if(appLaunched) return;
+    appLaunched = true;
+    const animMs = reduce ? 0 : 520;
+    folderLaunch.classList.add('is-opening');
+    appWindow.hidden = false;
+    appWindow.setAttribute('aria-hidden', 'false');
+    appWindow.classList.add('is-opening');
+    setTimeout(()=>{
+      folderLaunch.hidden = true;
+      appWindow.classList.remove('is-opening');
+    }, animMs);
+    settledSince = Date.now();
+    lastSettledIdx = -1;
+    frame();
+  }
+
   function animateTo(idx){
-    idx=Math.max(0,Math.min(N-1,idx));
+    if(!appLaunched || finalePhase==='cta' || finalePhase==='exit') return;
+    idx=Math.max(0,Math.min(FINALE_IDX,idx));
     clearTimeout(revealTimer);
     if(reduce){ pos=target=idx; animating=false; frame(); return; }
     fromPos=pos; target=idx; t0=performance.now();
@@ -554,7 +731,9 @@
     if(dragging){ animating=false; return; }
     let t=(now-t0)/dur; if(t>=1)t=1;
     pos=fromPos+(target-fromPos)*ease(t);
-    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos));
+    const cityIdx=cityIdxFromPos(pos);
+    render(pos,false,false);
+    placeThumb(pos); placeTip(false); placePartner(false, cityIdx);
     if(t<1){ requestAnimationFrame(tick); }
     else { animating=false; pos=target; frame(); }
   }
@@ -572,22 +751,28 @@
   }
   function placeThumb(p){
     const {travel}=trackGeom();
-    const x=TRACK_INSET + (p/(N-1))*travel;
+    const x=TRACK_INSET + (p/(STOPS-1))*travel;
     thumb.style.left=x+'px';
   }
   function updateArrows(){
+    if(finalePhase==='cta' || finalePhase==='exit'){
+      prev.disabled=true;
+      next.disabled=true;
+      return;
+    }
     const i=Math.round(pos);
     prev.disabled = (!animating && i<=0 && pos<=0.0001);
-    next.disabled = (!animating && i>=N-1 && pos>=N-1-0.0001);
+    next.disabled = (!animating && i>=FINALE_IDX && pos>=FINALE_IDX-0.0001);
   }
 
   prev.addEventListener('click',()=>{ if(prev.disabled)return; animateTo(Math.round(animating?target:pos)-1); });
   next.addEventListener('click',()=>{ if(next.disabled)return; animateTo(Math.round(animating?target:pos)+1); });
 
   thumb.addEventListener('pointerdown',e=>{
+    if(finalePhase!=='explore') return;
     dragging=true; animating=false;
     clearTimeout(revealTimer);
-    placePartner(false, Math.round(pos));
+    placePartner(false, cityIdxFromPos(pos));
     thumb.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
@@ -595,9 +780,9 @@
     if(!dragging)return;
     const {left,travel,tw}=trackGeom();
     let x=e.clientX-left-tw/2;
-    let p=((x-TRACK_INSET)/travel)*(N-1);
-    pos=Math.max(0,Math.min(N-1,p));
-    render(pos,false); placeThumb(pos); placeTip(false); placePartner(false, Math.round(pos)); updateArrows();
+    let p=((x-TRACK_INSET)/travel)*(STOPS-1);
+    pos=Math.max(0,Math.min(FINALE_IDX,p));
+    render(pos,false,false); placeThumb(pos); placeTip(false); placePartner(false, cityIdxFromPos(pos)); updateArrows();
   });
   function endDrag(e){
     if(!dragging)return; dragging=false;
@@ -608,26 +793,53 @@
   thumb.addEventListener('pointercancel',endDrag);
 
   track.addEventListener('pointerdown',e=>{
-    if(e.target===thumb)return;
+    if(finalePhase!=='explore' || e.target===thumb)return;
     const {left,travel,tw}=trackGeom();
-    let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(N-1);
-    animateTo(Math.round(Math.max(0,Math.min(N-1,p))));
+    let p=((e.clientX-left-tw/2-TRACK_INSET)/travel)*(STOPS-1);
+    animateTo(Math.round(Math.max(0,Math.min(FINALE_IDX,p))));
   });
 
   window.addEventListener('keydown',e=>{
+    if(!appLaunched){
+      if(e.target===folderLaunch && (e.key==='Enter' || e.key===' ')){
+        e.preventDefault();
+        openApp();
+      }
+      return;
+    }
     if(e.key==='ArrowRight'){ if(!next.disabled)next.click(); }
     if(e.key==='ArrowLeft'){ if(!prev.disabled)prev.click(); }
   });
 
   window.addEventListener('resize',()=>{
+    if(!appLaunched) return;
     placeThumb(pos);
-    if(settledNow()){
-      const idx=Math.round(pos);
-      placeTip(revealReady(), idx);
+    if(settledNow() && finalePhase==='explore'){
+      const idx=cityIdxFromPos(pos);
+      placeTip(shouldShowCityUi(), idx);
       updatePartnerPopup();
     }
   });
 
-  frame();
+  folderLaunch.addEventListener('click', openApp);
+  folderLaunch.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openApp(); }
+  });
+
+  function revealIntro(){
+    const maxW = Math.min(window.innerWidth * 0.385, 146);
+    const ratio = folderImg.naturalHeight / folderImg.naturalWidth;
+    folderImg.style.width = maxW + 'px';
+    folderImg.style.height = Math.round(maxW * ratio) + 'px';
+    folderLaunch.hidden = false;
+    if(reduce){
+      folderLaunch.classList.add('is-visible');
+      return;
+    }
+    requestAnimationFrame(()=>{
+      folderLaunch.classList.add('is-visible');
+    });
+  }
+  revealIntro();
 })();
 </script>
